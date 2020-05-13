@@ -30,6 +30,7 @@ import hdbscan
 
 from getCI import *
 
+# TODO: why is this a class?
 class Astrometry:
 
     """
@@ -44,10 +45,7 @@ class Astrometry:
 
         self.full_table = full_table
 
-
-
-
-
+    # TODO: needs documentation updates
     def get_bin_mid(self, bins):
 
         """
@@ -66,16 +64,11 @@ class Astrometry:
 
         return(bins_middle_values)
 
-
-
     # Defines the gaussian
-
+    # TODO: needs documentation updates
     def gaussian(self, x, a, b, c):
 
         return(a*np.exp(-(x-b)**2/(2*c**2)))
-
-
-
 
 
     def remove_masked(self, ap_column, header):
@@ -88,52 +81,33 @@ class Astrometry:
 
         data_list = []
 
-        for i in ap_column[header]:
+        for i in ap_column[header]: # does this actually work?
 
             if type(i)== np.float64:
 
                 data_list.append(i)
 
-
-
         return(data_list)
 
-
-
-
-
+    # TODO: needs documentation update
     def make_hist(self, data_list):
 
         """
 
-        Makes a histogram using np.histogram. Return a 2-tuple consisting of the output
-
-        of the output of np.histogram and the midpoints of the bins.
+        Makes a histogram using np.histogram. Return a 2-tuple consisting of the output of np.histogram and the midpoints of the bins.
 
         """
 
-
-
-        #print(data_list.data)
-
-
-
         data_list = data_list[~data_list.mask]
 
-
-
         histogram = np.histogram(data_list.data, bins="auto")
-
-
 
         midpoints_of_bins = self.get_bin_mid(histogram[1])
 
         return((histogram, midpoints_of_bins))
 
-
-
-
-
+    # TODO: needs documentation updates
+    # TODO: is this used anywhere?
     def fit_gaussian(self, colname, full_column=False):
 
         """
@@ -143,9 +117,7 @@ class Astrometry:
         bins, and fitting a gaussian using scipy's curve_fit.
 
 
-
         Input: List of data points
-
 
 
         Output: 3-tuple (a,b,c) consisting of the coefficients of the
@@ -153,19 +125,9 @@ class Astrometry:
                 gaussian: a*e^{-(x-b)^2/(2c^2)}.
 
 
-
         Dependency: plt, numpy, scipy
 
         """
-
-        #number_of_bins = bin_number(data_list)
-
-
-
-        #hist_values = bin_data(data_list, number_of_bins)
-
-
-
 
 
         if full_column:
@@ -178,10 +140,11 @@ class Astrometry:
 
         fit = scipy.optimize.curve_fit(self.gaussian, histogram[1], histogram[0][0])
 
-
-
         return((fit[0][0], fit[0][1], fit[0][2]))
 
+    # TODO: needs documentation update
+    # TODO: investigate options on HDBSCAN
+    # (e.g. can we run several analyses in parallel?)
     def identify_clusters(self, table, columns, expected_clusters=None, verbose=False):
 
         # can include:
@@ -258,6 +221,8 @@ class Astrometry:
         print("Clustering calculation complete.")#\n Detected " + str(max(membership)) + " clusters in a population of " + str(len(data_A)) " objects.")
         return candidates_table, membership
 
+    # TODO: needs documentation update
+    # TODO: make cluster filters more robust/read in from file?
     def process_clusters(self, candidates_table, membership, columns):
         clusters_data = []
         col_membership = Column(name="cluster_membership", data=membership)
@@ -273,6 +238,8 @@ class Astrometry:
 
         return clusters_data
 
+    # TODO: needs documentation update
+    # takes a candidate cluster and pares down the members
     def find_cluster_members(self, cluster, columns):
         loglikelihoods = []
         cluster_size = []
@@ -345,6 +312,8 @@ class Astrometry:
 
         return cluster_members[index]
 
+    # TODO: needs documentation updates
+    # TODO: shift to one function instead, and call with the desired parameter.
     def cluster_stats(self, cluster):
         pmra_hist = []
         pmra_best = 0

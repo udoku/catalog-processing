@@ -34,38 +34,21 @@ from Photometry import *
 class Visualization:
 
     """
-
     This provides functionality for plotting and visualization.
-
-
 
     Methods in this class:
 
-
-
     > To plot any two columns of the full_table against each other
-
-
 
     > To plot a histogram and gaaussian of any column of the full_table
 
-
-
     > Overlay coordinates from all three surveys (gaia, 2mass, allwise) over images of the sky (DSS, AllWISE, 2MASS, etc.)
-
-
 
     > Plot any cut equation as a line in the diagrams.
 
-
-
     > Define certain <standard plots> that are allways displayed when the main is run with new HAeBe coordinates.
 
-
-
     """
-
-
 
     def __init__(self, full_table, ra, dec):
 
@@ -821,7 +804,7 @@ class Visualization:
         # display plot
         plt.show()
 
-
+    # TODO: needs documentation update
     def cut_and_plot(self, cut, col1, col2, phot=None, xlim=None, ylim=None, squared=False, invert_y=False, invert_x=False):
 
         """
@@ -829,7 +812,7 @@ class Visualization:
 
         col1/2: (colname, label)
 
-        phot: instatiation of Photometry (((I think this is ugly, TODO: Fix)))
+        phot: instatiation of Photometry (((I think this is ugly, TODO: Fix by rolling Photometry and CatalogTable together!)))
         """
 
         (cut_true, cut_false) = self.phot.apply_cut(cut)
@@ -841,12 +824,12 @@ class Visualization:
                 xlabel, ylabel, xlim, ylim, squared=squared, invert_y = invert_y, invert_x = invert_x)
 
 
+    # TODO: needs documentation update
+    # TODO: this should probably be a script instead of a part of the class.
     def plot_diagnostics(self):
         """
         generates hard-coded plots to display useful diagnostic information
         """
-
-        
         
         # define variables
         M_g = [g + 5 - 5*np.log10(1000/p) for g,p in zip(self.full_table["phot_g_mean_mag"], self.full_table["parallax"])]
@@ -961,6 +944,8 @@ class Visualization:
         except:
             print("An error occurred while plotting diagnostics. This usually occurs because no sources passed a photometric cut.")
 
+    # TODO: needs documentation update
+    # TODO: this implementation is kinda ugly. I'd prefer to pass in a list of Cluster objects. Plus then we can reuse other methods.
     def plot_clusters(self, table, membership, column_A, column_B, xlim= None, ylim=None, invert_x=False, invert_y=True, squared=True):
         # create pyplot object
         fig = plt.figure()

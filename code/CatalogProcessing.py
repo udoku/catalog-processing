@@ -1,39 +1,35 @@
 #import astropy
 #from astropy import coordinates
-from astropy import wcs
+#from astropy import wcs
 import astropy.units as u
 from astropy.coordinates.sky_coordinate import SkyCoord
 from astropy.table import hstack, vstack, Table, Column
 from astropy.io import ascii
-from astropy.visualization import (MinMaxInterval, ZScaleInterval, PercentileInterval,
-                                   SqrtStretch, LinearStretch, LogStretch, HistEqStretch,
-                                   ImageNormalize)
+#from astropy.visualization import (MinMaxInterval, ZScaleInterval, PercentileInterval,
+#                                   SqrtStretch, LinearStretch, LogStretch, HistEqStretch,
+#                                   ImageNormalize)
 #from astropy.units import Quantity
-from astroquery.vizier import Vizier
+#from astroquery.vizier import Vizier
 from astroquery.gaia import Gaia
 from astroquery.utils.tap.core import TapPlus
-from astroquery.skyview import SkyView
-
-# from astropy.visualization import (MinMaxInterval, ZScaleInterval, PercentileInterval, )
-# jupyter matplotlib backends
-# inconsistent? windows popping up?
-# calling "notebook" reverts to "nbagg"
+#from astroquery.skyview import SkyView
 
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib
-import scipy.optimize
-import pandas as pd
-from tkinter import *
+#import matplotlib.pyplot as plt
+#import matplotlib
+#import scipy.optimize
+#import pandas as pd
+#from tkinter import *
 
-import hdbscan
+#import hdbscan
 
-from getCI import *
+#from getCI import *
 
 from CatalogTable import *
 
 class catalogProcessing:
 
+    # TODO: improve class documentation
     """
 
     Instantiated with
@@ -80,24 +76,27 @@ class catalogProcessing:
         print("Done querying AllWISE!\n")
         # other catalogs to be added
 
-
-
     def get_radius(self):
 
         """
-        Input: parallax in millliarcseconds, the desired physical search radius in parsec.
-        Output: angular search radius in degrees.
+        Converts a parallax (mas) and a physical search radius (pc) to an angular search radius.
+
+        Arguments:
+            [none]
+
+        Returns:
+            Angular search radius in degrees.
         """
 
         # since parallax is given in milliarcseconds, we have to multiply the reciprocal of the parallax by 1000 to get distance in parsecs
         # in general, distance (pc) ~ 1 / parallax (arcsec)
         dist = 1000/(self.parallax)
 
-        angular_radius_as = ((self.radius)*2.06265*10**5)/dist # magic number: number of AU in a parsec (why??)
+        angular_radius_as = ((self.radius)*2.06265*10**5)/dist # magic number: number of AU in a parsec
 
         return(angular_radius_as/3600)
 
-
+    # TODO: implement replacement for gaia_query and ir_query
     def query_catalogs(self):
         """
         Performs queries of catalogs across the specified radius.
@@ -108,7 +107,7 @@ class catalogProcessing:
 
         pass
 
-
+    # TODO: integrate with irquery
     def gaia_query(self):
 
         """
@@ -155,6 +154,7 @@ class catalogProcessing:
 
         return(CatalogTable(catalog,query_results))
 
+    # TODO: Needs documentation update/standardization
     def ir_query(self, ircat_name, view_adql=False):
 
         """
@@ -193,7 +193,7 @@ class catalogProcessing:
 
         """
 
-        catalog = [irquery]
+        catalog = [ircat_name]
 
         search_string = "SELECT * FROM {} WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',{},{},{}))=1 ".format(ircat_name, str(self.skycoord.ra.degree), str(self.skycoord.dec.degree), self.radius)
 
@@ -211,6 +211,7 @@ class catalogProcessing:
 
     # TODO: needs documentation updates
     # TODO: needs better error handling
+    # TODO: read in survey definitions from file
     def xmatch(self, catalog1, catalog2, rad=-1, show_dynamic_radii=True):
 
         """
@@ -445,7 +446,7 @@ class catalogProcessing:
         return(CatalogTable(cats1, combined_table))
 
     # TODO: needs documentation updates
-    # TODO: needs updates to support more catalogs
+    # TODO: needs updates to support more/arbitrary catalogs
     def table_difference(self, table1, table2, id_1, id_2, not_in_table1, gaia_cat, tmass_cat, allwise_cat):
 
         """
@@ -711,6 +712,7 @@ class catalogProcessing:
 
         return(full_table)
 
+    # TODO: needs documentation updates/standardization
     # TODO: needs updates to support extraction of rows with data in particular columns
     def extract_ft_part(self, cat_itr, table):
         """

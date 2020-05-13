@@ -30,6 +30,8 @@ import hdbscan
 
 from getCI import *
 
+# TODO: implement additional methods as required to complete CatalogProcessing
+# TODO: roll in Photometry class, or roll this into that.
 class CatalogTable:
 
     def __init__(self, catalogs, table):
@@ -37,6 +39,7 @@ class CatalogTable:
         self.catalogs = catalogs
         self.table = table
 
+    # TODO: needs documentation and implementation
     def include_columns(self, columns_list):
         pass
         # restrict self.table to only include columns in columns_list

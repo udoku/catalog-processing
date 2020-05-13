@@ -32,33 +32,33 @@ from getCI import *
 
 from datetime import datetime
 
-class astrio:
+# TODO: needs documentation update
+# TODO: needs implementation
+def file_to_table(self, fname, tname=None):
 
-    def __init__(self):
-        pass
+    pass
+    # code to pull a file into an astropy table
+    #returns the table if tname=None
+    #appends the table to tname if != None
 
-    def file_to_table(self, fname, tname=None):
+# TODO: needs documentation update
+# TODO: needs implementation
+def table_to_file(self, table, fname):
 
-        pass
-        # code to pull a file into an astropy table
-        #returns the table if tname=None
-        #appends the table to tname if != None
+    pass
+    # code to push an astropy table into a file
+    # returns nothing
 
-    def table_to_file(self, table, fname):
+# TODO: needs documentation update
+def get_time(self, specification=None):
 
-        pass
-        # code to push an astropy table into a file
-        # returns nothing
+    time = datetime.now()
 
-    def get_time(self, specification=None):
+    if specification is not None:
+        try:
+            return time.strftime(specification)
+        except TypeError as e:
+            print e.info
+            print e.message
 
-        time = datetime.now()
-
-        if specification is not None:
-            try:
-                return time.strftime(specification)
-            except TypeError as e:
-                print e.info
-                print e.message
-
-        return time.strftime("%Y-%m-%d-%H:%M:%S")
+    return time.strftime("%Y-%m-%d-%H:%M:%S")

@@ -32,16 +32,16 @@ from getCI import *
 
 class Photometry:
 
+    # TODO: hunt down what self.non and full_column do?
+    # TODO: needs documentaion update
     def __init__(self, full_table, full_column=False):
 
         self.full_table = full_table
 
         self.none = None
 
-
-
-
-
+    # TODO: needs documentation update
+    # TODO: maybe read in table of colors?
     def apply_cut(self, cut):
 
         """
@@ -99,8 +99,8 @@ class Photometry:
         # return cut_true and cut_false as a tuple
         return((cut_true, cut_false))
 
-
-
+    # TODO: figure out where this is called
+    # TODO: needs documentation update
     def cut_list(self, iterable, cut, collist=None):
 
         """
@@ -125,8 +125,7 @@ class Photometry:
                 else:
                     cut_false.append(val)
 
-
-
+    # TODO: remove. Deprecated by addition of variability column in full_table.
     def variability_cut(self):
 
         """
@@ -152,7 +151,8 @@ class Photometry:
 
         return(cut_table)
 
-
+    # TODO: needs documentation update
+    # TODO: replace with function that reads in a file with cuts and executes those cuts
     def gaia_color_mag_cut(self):
 
         """
@@ -194,7 +194,7 @@ class Photometry:
 
         return(cut_table)
 
-
+    # TODO: this is kind of clunky. Probably best to replace with a fn that reads in a color cut and executes it.
     def keep_reddest(self, join_method="and"):
         """
         Returns a list of sources that are redder than the reddest photospheres. Default criteria applied:
@@ -207,10 +207,10 @@ class Photometry:
         J-K > 0.8
         J-H > 0.7
 
-        Inputs:
+        Arguments:
             join_method [string, optional, default: "and"]: string designating how to combine the criteria. Typical values would be "and" and "or".
 
-        Outputs:
+        Returns:
             cut_true, cut_false [tuple of astropy tables]: tables which satisfy and fail to satisfy the specified criteria, respectively.
         """
 
@@ -327,7 +327,7 @@ class Photometry:
         print(self.cut_string)
         return self.apply_cut(self.cut_string)
 
-
+    # TODO: see function above
     def keep_likely_disks(self, join_method="and"):
         """
         Returns a list of sources that are so red, they cannot be explained by a reddened photosphere (and are thus likely to have disks). Default criteria applied:
@@ -340,10 +340,10 @@ class Photometry:
         K-W1 > 0.3
         H-K > 1.5 and K-W2 > 2.8
 
-        Inputs:
+        Arguments:
             join_method [string, optional, default: "and"]: string designating how to combine the criteria. Typical values would be "and" and "or".
 
-        Outputs:
+        Returns:
             cut_true, cut_false [tuple of astropy tables]: tables which satisfy and fail to satisfy the specified criteria, respectively.
         """
 
@@ -490,7 +490,7 @@ class Photometry:
         print(self.cut_string)
         return self.apply_cut(self.cut_string)
 
-
+    # TODO: replace with function that reads in cut from a file and performs that cut
     def remove_star_forming_galaxies(self):
         """
         Returns a copy of full_table without star forming galaxies that may mimic young stars. Criteria used:
@@ -505,7 +505,8 @@ class Photometry:
 
         return self.apply_cut(cut)
 
-
+    # TODO: needs documentation update
+    # TODO: currently unused? is there a reason to keep this?
     def subtract_cols(self, colname1, colname2):
 
         """

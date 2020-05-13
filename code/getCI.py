@@ -39,4 +39,3 @@ def get_high(cdf_interpf,low,ci):
     myfun = lambda x: np.abs(cdf_interpf(x)-cdf_interpf(low)-ci)
     best_high=minimize(myfun,low)
     return best_high
-
