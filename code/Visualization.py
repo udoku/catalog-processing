@@ -31,6 +31,8 @@ from getCI import *
 
 from Photometry import *
 
+from Astrometry import *
+
 class Visualization:
 
     """

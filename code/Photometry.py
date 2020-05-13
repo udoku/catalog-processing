@@ -30,6 +30,8 @@ import hdbscan
 
 from getCI import *
 
+from CatalogTable import *
+
 class Photometry:
 
     # TODO: hunt down what self.non and full_column do?
@@ -78,26 +80,28 @@ class Photometry:
         """
 
         # table of color values. Allows shorthand filter names to be used and then replaced by column names
-        colors =  {"G": """self.full_table["phot_g_mean_mag"]""",
-                   "H": """self.full_table["h_m"]""",
-                   "J": """self.full_table["j_m"]""",
-                   "K": """self.full_table["k_m"]""",
-                   "W1": """self.full_table["w1mpro"]""",
-                   "W2": """self.full_table["w2mpro"]""",
-                   "W3": """self.full_table["w3mpro"]""",
-                   "W4": """self.full_table["w4mpro"]""",
-                   "BP-RP": """self.full_table["bp_rp"]"""}
+        colors =  {"G": """self.full_table.table["phot_g_mean_mag"]""",
+                   "H": """self.full_table.table["h_m"]""",
+                   "J": """self.full_table.table["j_m"]""",
+                   "K": """self.full_table.table["k_m"]""",
+                   "W1": """self.full_table.table["w1mpro"]""",
+                   "W2": """self.full_table.table["w2mpro"]""",
+                   "W3": """self.full_table.table["w3mpro"]""",
+                   "W4": """self.full_table.table["w4mpro"]""",
+                   "BP-RP": """self.full_table.table["bp_rp"]"""}
 
         # replaces all instances of a color keyword with the full_table column for that color
         for color in colors.keys():
             cut = cut.replace(color, colors[color])
 
         # evaluates section of the table that passes the cut and section that does not
-        cut_true = self.full_table[pd.eval(cut)]
-        cut_false = self.full_table[~pd.eval(cut)]
+        cut_true = self.full_table.table[pd.eval(cut)]
+        cut_false = self.full_table.table[~pd.eval(cut)]
+
+        cats = self.full_table.catalogs
 
         # return cut_true and cut_false as a tuple
-        return((cut_true, cut_false))
+        return((CatalogTable(cats,cut_true), CatalogTable(cats,cut_false)))
 
     # TODO: figure out where this is called
     # TODO: needs documentation update
@@ -119,7 +123,7 @@ class Photometry:
                 else:
                     cut_false.append(val)
         else:
-            for val, col_val in zip(iterable, col):
+            for val, col_val in zip(iterable, collist):
                 if pd.eval(cut):
                     cut_true.append(val)
                 else:
@@ -132,13 +136,13 @@ class Photometry:
         Returns a copy of the full_table with systems that satisfy the variability cut.
         """
 
-        cut_table = self.full_table.copy()
+        cut_table = self.full_table.table.copy()
 
         mask_shape = []
 
-        variability = [np.sqrt( g_n_obs ) / mean_flux_over_error for g_n_obs, mean_flux_over_error in zip(self.full_table["phot_g_n_obs"], self.full_table["phot_g_mean_flux_over_error"])]
+        variability = [np.sqrt( g_n_obs ) / mean_flux_over_error for g_n_obs, mean_flux_over_error in zip(self.full_table.table["phot_g_n_obs"], self.full_table.table["phot_g_mean_flux_over_error"])]
 
-        for g, v in zip(self.full_table["phot_g_mean_mag"], variability):
+        for g, v in zip(self.full_table.table["phot_g_mean_mag"], variability):
 
             if (v > 0.05 and g < 18):
                 mask_shape.append(False)
@@ -160,11 +164,11 @@ class Photometry:
         
         """
 
-        M_g = [g + 5 - np.log10(1000/p) -10 for g,p in zip(self.full_table["phot_g_mean_mag"], self.full_table["parallax"])]
+        M_g = [g + 5 - np.log10(1000/p) -10 for g,p in zip(self.full_table.table["phot_g_mean_mag"], self.full_table.table["parallax"])]
 
         mask_shape = []
 
-        for col, m_g in zip(self.full_table["bp_rp"], M_g):
+        for col, m_g in zip(self.full_table.table["bp_rp"], M_g):
 
             if (m_g < 2.46*col + 2.76) and (0.3 < col < 1.8):
 
@@ -515,4 +519,4 @@ class Photometry:
 
         """
 
-        return([i-j for i,j in zip(self.full_table[colname1], self.full_table[colname2])])
+        return([i-j for i,j in zip(self.full_table.table[colname1], self.full_table.table[colname2])])

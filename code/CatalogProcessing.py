@@ -242,11 +242,11 @@ class catalogProcessing:
                                   "gaia":["gaia_ra", "gaia_dec", "ra_error", "dec_error"]}
 
 
-        colnames1 = surveys_coord_colnames[catalog1[0][0]]
-        cat1 = catalog1[1]
+        colnames1 = surveys_coord_colnames[catalog1.catalogs[0]]
+        cat1 = catalog1.table
 
-        colnames2 = surveys_coord_colnames[catalog2[0][0]]
-        cat2 = catalog2[1]
+        colnames2 = surveys_coord_colnames[catalog2.catalogs[0]]
+        cat2 = catalog2.table
 
         ra1 = cat1[colnames1[0]]
         dec1 = cat1[colnames1[1]]
@@ -280,7 +280,7 @@ class catalogProcessing:
 
         else:
 
-            constraint = d2d < rad*u.arcsec
+            constraint = d2d < rad#*u.arcsec
 
 
         """
@@ -418,7 +418,7 @@ class catalogProcessing:
         """
 
         # xmatch the two tables
-        xmatch_result = self.xmatch(tablecat1,tablecat2)
+        xmatch_result = self.xmatch(cat_table_1,cat_table_2)
 
         table1 = cat_table_1.table
         table2 = cat_table_2.table
@@ -464,19 +464,19 @@ class catalogProcessing:
 
         """
 
-        diff_table = table2
+        diff_table = table2.table
 
 
-        gaia_mask_shape = [-1 for i in range(len(gaia_cat.colnames))]
+        gaia_mask_shape = [-1 for i in range(len(gaia_cat.table.colnames))]
 
-        tmass_mask_shape = [-1 for i in range(len(tmass_cat.colnames))]
+        tmass_mask_shape = [-1 for i in range(len(tmass_cat.table.colnames))]
 
-        allwise_mask_shape = [-1 for i in range(len(allwise_cat.colnames))]
+        allwise_mask_shape = [-1 for i in range(len(allwise_cat.table.colnames))]
 
 
-        for row in table1:
+        for row in table1.table:
 
-            if row[id_1] in table2[id_2]:
+            if row[id_1] in table2.table[id_2]:
 
                 pass
 
@@ -602,11 +602,14 @@ class catalogProcessing:
 
         if gen_small_table:
 
-            gaia_cat = self.gaia["designation", "ra", "dec", "ra_error", "dec_error", "parallax", "parallax_error", "pmra", "pmra_error", "pmdec", "pmdec_error", "phot_g_mean_mag", "bp_rp", "bp_g", "g_rp", "phot_g_n_obs", "phot_g_mean_flux_over_error", "phot_g_mean_flux_error", "phot_g_mean_flux", "phot_bp_mean_mag", "phot_rp_mean_mag"]
+            gaia_cat_table = self.gaia.table["designation", "ra", "dec", "ra_error", "dec_error", "parallax", "parallax_error", "pmra", "pmra_error", "pmdec", "pmdec_error", "phot_g_mean_mag", "bp_rp", "bp_g", "g_rp", "phot_g_n_obs", "phot_g_mean_flux_over_error", "phot_g_mean_flux_error", "phot_g_mean_flux", "phot_bp_mean_mag", "phot_rp_mean_mag"]
+            gaia_cat = CatalogTable(["gaia"],gaia_cat_table)
 
-            tmass_cat = self.tmass["designation", "ra", "dec","err_maj", "err_min", "j_m", "h_m", "k_m", "j_cmsig", "h_cmsig", "k_cmsig", "k_snr"]
+            tmass_cat_table = self.tmass.table["designation", "ra", "dec","err_maj", "err_min", "j_m", "h_m", "k_m", "j_cmsig", "h_cmsig", "k_cmsig", "k_snr"]
+            tmass_cat = CatalogTable(["2mass"],tmass_cat_table)
 
-            allwise_cat = self.allwise["designation", "ra", "dec", "sigra", "sigdec", "w1mpro", "w2mpro", "w3mpro", "w4mpro", "w1sigmpro", "w2sigmpro", "w3sigmpro", "w4sigmpro", "w4snr"]
+            allwise_cat_table = self.allwise.table["designation", "ra", "dec", "sigra", "sigdec", "w1mpro", "w2mpro", "w3mpro", "w4mpro", "w1sigmpro", "w2sigmpro", "w3sigmpro", "w4sigmpro", "w4snr"]
+            allwise_cat = CatalogTable(["allwise"],allwise_cat_table)
 
         else:
 
@@ -619,31 +622,31 @@ class catalogProcessing:
         # rename columns to avoid name collisions later
         print("Renaming columns...")
 
-        gaia_cat.rename_column("designation", "gaia_designation")
-        gaia_cat.rename_column("ra", "gaia_ra")
-        gaia_cat.rename_column("dec", "gaia_dec")
+        gaia_cat.table.rename_column("designation", "gaia_designation")
+        gaia_cat.table.rename_column("ra", "gaia_ra")
+        gaia_cat.table.rename_column("dec", "gaia_dec")
 
-        tmass_cat.rename_column("designation", "2mass_designation")
-        tmass_cat.rename_column("ra", "2mass_ra")
-        tmass_cat.rename_column("dec", "2mass_dec")
+        tmass_cat.table.rename_column("designation", "2mass_designation")
+        tmass_cat.table.rename_column("ra", "2mass_ra")
+        tmass_cat.table.rename_column("dec", "2mass_dec")
 
-        allwise_cat.rename_column("designation", "allwise_designation")
-        allwise_cat.rename_column("ra", "allwise_ra")
-        allwise_cat.rename_column("dec", "allwise_dec")
+        allwise_cat.table.rename_column("designation", "allwise_designation")
+        allwise_cat.table.rename_column("ra", "allwise_ra")
+        allwise_cat.table.rename_column("dec", "allwise_dec")
 
         print("Crossmatching Gaia with 2MASS...")
-        gaia_X_tmass = self.merge_tables((("gaia",), gaia_cat), (("2mass",), tmass_cat))
+        gaia_X_tmass = self.merge_tables(gaia_cat, tmass_cat)
 
 
         print("Crossmatching Gaia with AllWISE...")
-        gaia_X_allwise = self.merge_tables((("gaia",), gaia_cat), (("allwise",), allwise_cat))
+        gaia_X_allwise = self.merge_tables(gaia_cat, allwise_cat)
 
 
         print("Crossmatching 2MASS with AllWISE...")
-        tmass_X_allwise = self.merge_tables((("2mass",), tmass_cat), (("allwise",), allwise_cat))
+        tmass_X_allwise = self.merge_tables(tmass_cat, allwise_cat)
 
 
-        gaia_X_tmass_X_allwise = self.merge_tables(gaia_X_tmass, (("allwise",), allwise_cat))
+        gaia_X_tmass_X_allwise = self.merge_tables(gaia_X_tmass,  allwise_cat)
         
         full_table = gaia_X_tmass_X_allwise
 
@@ -651,43 +654,43 @@ class catalogProcessing:
 
         # objects in gaia_X_tmass_table that are not in gaia_X_tmass_X_allwise, i.e. objects in Gaia and Tmass but not Allwise
         diff1 = self.table_difference(gaia_X_tmass, gaia_X_tmass_X_allwise, "gaia_designation", "gaia_designation", ["allwise"], gaia_cat, tmass_cat, allwise_cat)
-        full_table = vstack(full_table, diff1)
+        full_table.table = vstack(full_table.table, diff1)
 
 
         # objects in gaia_cat that are not in full_table, i.e. objects that are in gaia but NOT in (all three catalogs, or both gaia and tmass)
         diff2 = self.table_difference(gaia_cat, full_table, "gaia_designation", "gaia_designation", ["2mass", "allwise"], gaia_cat, tmass_cat, allwise_cat)
-        full_table = vstack(full_table, diff2)
+        full_table.table = vstack(full_table.table, diff2)
 
 
         # objects in tmass_X_allwise but not in gaia
         diff3 = self.table_difference(tmass_X_allwise, full_table, "2mass_designation", "2mass_designation", ["gaia"], gaia_cat, tmass_cat, allwise_cat)
-        full_table = vstack(full_table, diff3)
+        full_table.table = vstack(full_table.table, diff3)
 
 
         # objects in tmass but not in gaia or allwise
         diff4 = self.table_difference(tmass_cat, full_table, "2mass_designation", "2mass_designation", ["gaia", "allwise"], gaia_cat, tmass_cat, allwise_cat)
-        full_table = vstack(full_table, diff4)
+        full_table.table = vstack(full_table.table, diff4)
 
 
         # objects in allwise but not in (gaia OR tmass_X_allwise OR all three OR gaia_X_tmass OR tmass)
         diff5 = self.table_difference(allwise_cat, full_table, "allwise_designation", "allwise_designation", ["gaia", "2mass"], gaia_cat, tmass_cat, allwise_cat)
-        full_table  = vstack(full_table, diff5)
+        full_table.table  = vstack(full_table.table, diff5)
 
         print("Computing user-defined columns...")
         print("Variability...")
-        v = np.sqrt(full_table['phot_g_n_obs']/full_table['phot_g_mean_flux_over_error'])
+        v = np.sqrt(full_table.table['phot_g_n_obs']/full_table.table['phot_g_mean_flux_over_error'])
         v.name="variability"
         v.unit="(n_obs / mag)^0.5"
-        full_table.add_column(v)
+        full_table.table.add_column(v)
 
         print("Radial distance...")
-        d = 1000 / full_table['parallax']
+        d = 1000 / full_table.table['parallax']
         d.name = "radial_distance"
         d.unit="pc"
-        full_table.add_column(d)
+        full_table.table.add_column(d)
 
         # summary statistics for data
-        print("Full table generated. Summary:")
+        '''print("Full table generated. Summary:")
         print("\nGaia:")
         print("Total rows: "+ str(len(full_table['gaia_designation'])))
         print("G: " + str(len(full_table['phot_g_mean_mag'].mask.nonzero()[0])))
@@ -708,7 +711,7 @@ class catalogProcessing:
         print("W1: " + str(len(full_table['w1mpro'].mask.nonzero()[0])))
         print("W2: " + str(len(full_table['w2mpro'].mask.nonzero()[0])))
         print("W3: " + str(len(full_table['w3mpro'].mask.nonzero()[0])))
-        print("W4: " + str(len(full_table['w4mpro'].mask.nonzero()[0])))
+        print("W4: " + str(len(full_table['w4mpro'].mask.nonzero()[0])))'''
 
         return(full_table)
 
@@ -738,16 +741,16 @@ class catalogProcessing:
         #reduced_table = full_table.copy()
 
         #reduced_table.remove_rows(slice(0, len(reduced_table)))
-        reduced_table = empty_combined_table(full_table)
+        reduced_table = self.empty_combined_table(table)
 
 
-        for row_ind in range(len(full_table)):
+        for row_ind in range(len(table)):
 
             add_row = []
 
             for cat in cat_itr:
 
-                if not(np.ma.is_masked(full_table[row_ind][select_dict[cat]])):
+                if not(np.ma.is_masked(table[row_ind][select_dict[cat]])):
 
                     add_row.append(True)
 
@@ -761,12 +764,12 @@ class catalogProcessing:
 
                 mask = []
 
-                for val in full_table[row_ind]:
+                for val in table[row_ind]:
 
                     mask.append(np.ma.is_masked(val))
 
 
 
-                reduced_table.add_row(vals=full_table[row_ind],mask=mask)
+                reduced_table.add_row(vals=table[row_ind],mask=mask)
 
         return(reduced_table)

@@ -182,7 +182,7 @@ class Visualization:
 
         # coord_list = []
 
-        # for row in self.full_table["ra", "dec"]:
+        # for row in self.full_table.table["ra", "dec"]:
 
         #     coord_list.append((row[0], row[1]))
 
@@ -202,7 +202,7 @@ class Visualization:
                 ra_str = str(cat) + "_ra"
                 dec_str = str(cat) + "_dec"
 
-                for row in table[ra_str, dec_str]:
+                for row in table.table[ra_str, dec_str]:
 
                     if row[0] != 0:
                         count += 1
@@ -259,13 +259,13 @@ class Visualization:
 
             print(e)
 
-            '''ra_min = min(self.full_table["gaia_ra"])
+            '''ra_min = min(self.full_table.table["gaia_ra"])
 
-            ra_max = max(self.full_table["gaia_ra"])
+            ra_max = max(self.full_table.table["gaia_ra"])
 
-            dec_min = min(self.full_table["gaia_dec"])
+            dec_min = min(self.full_table.table["gaia_dec"])
 
-            dec_max = max(self.full_table["gaia_dec"])
+            dec_max = max(self.full_table.table["gaia_dec"])
 
             #print(ra_min, ra_max)
 
@@ -321,7 +321,7 @@ class Visualization:
 
             phot = Photometry(self.full_table)
 
-            column = phot.apply_cut(cut)[0][colname]
+            column = phot.apply_cut(cut)[0].table[colname]
 
             #print("column:")
 
@@ -372,11 +372,11 @@ class Visualization:
 
             fit = astrometry.fit_gaussian(colname)
 
-            #self.full_table[colname].pprint(max_lines=-1)
+            #self.full_table.table[colname].pprint(max_lines=-1)
 
 
 
-            hist = astrometry.make_hist(self.full_table[colname])
+            hist = astrometry.make_hist(self.full_table.table[colname])
 
 
 
@@ -384,7 +384,7 @@ class Visualization:
 
 
 
-            x = np.linspace(min(self.full_table[colname]),max(self.full_table[colname]),1000)
+            x = np.linspace(min(self.full_table.table[colname]),max(self.full_table.table[colname]),1000)
 
 
 
@@ -396,7 +396,7 @@ class Visualization:
 
 
 
-            plt.hist(self.full_table[colname], bins=hist[0][1])
+            plt.hist(self.full_table.table[colname], bins=hist[0][1])
 
             plt.plot(x, astrometry.gaussian(x, fit[0], fit[1], fit[2]))
 
@@ -405,10 +405,10 @@ class Visualization:
     def plot_error(self, parameter):
 
         try:
-            good_data = self.full_table["gaia_ra"] > 0
-            gmag = self.full_table['phot_g_mean_mag']
-            param_data = self.full_table[parameter]
-            param_error = self.full_table[parameter + "_error"]
+            good_data = self.full_table.table["gaia_ra"] > 0
+            gmag = self.full_table.table['phot_g_mean_mag']
+            param_data = self.full_table.table[parameter]
+            param_error = self.full_table.table[parameter + "_error"]
         except:
             print("Given parameter does not appear in the imported data. Check parameter name for consistency with full_table columns.")
 
@@ -439,7 +439,7 @@ class Visualization:
 
     def plot_list(self, colname_list):
 
-        #print(self.full_table[colname1], self.full_table[colname1])
+        #print(self.full_table.table[colname1], self.full_table.table[colname1])
 
 
 
@@ -461,13 +461,13 @@ class Visualization:
 
 
 
-            ax.set_xlabel(colname_list[i][0] + " [{}]".format(self.full_table[colname_list[i][0]].unit), fontsize=14)
+            ax.set_xlabel(colname_list[i][0] + " [{}]".format(self.full_table.table[colname_list[i][0]].unit), fontsize=14)
 
-            ax.set_ylabel(colname_list[i][1] + " [{}]".format(self.full_table[colname_list[i][1]].unit), fontsize=14)
+            ax.set_ylabel(colname_list[i][1] + " [{}]".format(self.full_table.table[colname_list[i][1]].unit), fontsize=14)
 
             #print("hi")
 
-            ax.scatter(self.full_table[colname_list[i][0]], self.full_table[colname_list[i][1]], s=8, marker="o")
+            ax.scatter(self.full_table.table[colname_list[i][0]], self.full_table.table[colname_list[i][1]], s=8, marker="o")
 
         plt.show()
 
@@ -483,17 +483,17 @@ class Visualization:
 
         if type(colname1) is str:
 
-            x = self.full_table[colname1]
+            x = self.full_table.table[colname1]
 
-            plt.xlabel(colname1 + " [{}]".format(self.full_table[colname1].unit), fontsize=14)
+            plt.xlabel(colname1 + " [{}]".format(self.full_table.table[colname1].unit), fontsize=14)
 
         elif type(colname1[0]) is str:
 
             #print("check")
 
-            x = self.full_table[colname1[0]]
+            x = self.full_table.table[colname1[0]]
 
-            plt.xlabel(colname1[1] + " [{}]".format(self.full_table[colname1[0]].unit), fontsize=14)
+            plt.xlabel(colname1[1] + " [{}]".format(self.full_table.table[colname1[0]].unit), fontsize=14)
 
         else:
 
@@ -505,15 +505,15 @@ class Visualization:
 
         if type(colname2) is str:
 
-            y = self.full_table[colname2]
+            y = self.full_table.table[colname2]
 
-            plt.ylabel(colname2 + " [{}]".format(self.full_table[colname2].unit), fontsize=14)
+            plt.ylabel(colname2 + " [{}]".format(self.full_table.table[colname2].unit), fontsize=14)
 
         elif type(colname2[0]) is str:
 
-            y = self.full_table[colname2[0]]
+            y = self.full_table.table[colname2[0]]
 
-            plt.ylabel(colname2[1] + " [{}]".format(self.full_table[colname2[0]].unit), fontsize=14)
+            plt.ylabel(colname2[1] + " [{}]".format(self.full_table.table[colname2[0]].unit), fontsize=14)
 
         else:
 
@@ -613,17 +613,17 @@ class Visualization:
 
             if type(col_tup[0]) is str:
 
-                x = self.full_table[col_tup[0]]
+                x = self.full_table.table[col_tup[0]]
 
-                ax.set_xlabel(col_tup[0] + " [{}]".format(self.full_table[col_tup[0]].unit), fontsize=14)
+                ax.set_xlabel(col_tup[0] + " [{}]".format(self.full_table.table[col_tup[0]].unit), fontsize=14)
 
             #elif type(col_tup[2]) is str:
 
             #    #print("check")
 
-            #    x = self.full_table[col_tup[0]]
+            #    x = self.full_table.table[col_tup[0]]
 
-            #    ax.set_xlabel(col_tup[2] + " [{}]".format(self.full_table[col_tup[0]].unit), fontsize=14)
+            #    ax.set_xlabel(col_tup[2] + " [{}]".format(self.full_table.table[col_tup[0]].unit), fontsize=14)
 
             else:
 
@@ -635,15 +635,15 @@ class Visualization:
 
             if type(col_tup[1]) is str:
 
-                y = self.full_table[col_tup[1]]
+                y = self.full_table.table[col_tup[1]]
 
-                plt.ylabel(col_tup[1] + " [{}]".format(self.full_table[col_tup[1]].unit), fontsize=14)
+                plt.ylabel(col_tup[1] + " [{}]".format(self.full_table.table[col_tup[1]].unit), fontsize=14)
 
             #elif type(col_tup[3]) is str:
 
-            #    y = self.full_table[col_tup[1]]
+            #    y = self.full_table.table[col_tup[1]]
 
-            #    plt.ylabel(colname2[1] + " [{}]".format(self.full_table[colname2[0]].unit), fontsize=14)
+            #    plt.ylabel(colname2[1] + " [{}]".format(self.full_table.table[colname2[0]].unit), fontsize=14)
 
             else:
 
@@ -746,8 +746,8 @@ class Visualization:
 
         self.plot_tables('stand-in title', (cut_true, cut_false), col1, col2, xlim=xlim, ylim=ylim, squared=squared, invert_y=invert_y, invert_x=invert_x)
         
-        #xlabel = str(col1[1]) + " [{}]".format(self.full_table[col1[0]].unit)
-        #ylabel = str(col2[1]) + " [{}]".format(self.full_table[col2[0]].unit)
+        #xlabel = str(col1[1]) + " [{}]".format(self.full_table.table[col1[0]].unit)
+        #ylabel = str(col2[1]) + " [{}]".format(self.full_table.table[col2[0]].unit)
 
         #self.plot_removed([(cut_true[col1[0]], cut_true[col2[0]]), (cut_false[col1[0]], cut_false[col2[0]])],
         #        xlabel, ylabel, xlim, ylim, squared=squared, invert_y = invert_y, invert_x = invert_x)
@@ -773,8 +773,8 @@ class Visualization:
 
         try:
         
-            xlabel = str(col1[1]) + " [{}]".format(tables[0][col1[0]].unit)
-            ylabel = str(col2[1]) + " [{}]".format(tables[0][col2[0]].unit)
+            xlabel = str(col1[1]) + " [{}]".format(tables[0].table[col1[0]].unit)
+            ylabel = str(col2[1]) + " [{}]".format(tables[0].table[col2[0]].unit)
 
         except KeyError as e:
             print("The specified colname does not match a column in the provided tables. " + 
@@ -783,11 +783,11 @@ class Visualization:
 
         tuples = []
 
-        for table in tables:
+        for t in tables:
             try:
-                tuples.append((table[col1[0]], table[col2[0]]))
+                tuples.append((t.table[col1[0]], t.table[col2[0]]))
             except KeyError as e:
-                print("Table " + str(tables.index(table)) + " does not include column " + e)
+                print("Table " + str(tables.index(t)) + " does not include column " + e)
         
         self.plot_tuples(title, tuples, xlabel, ylabel, xlim = xlim, ylim = ylim, invert_x = invert_x, invert_y = invert_y, squared=squared)
 
@@ -801,7 +801,7 @@ class Visualization:
         # define variables
 
         print("Computing photometric variables...")
-        M_g = [g + 5 - 5*np.log10(1000/p) for g,p in zip(self.full_table["phot_g_mean_mag"], self.full_table["parallax"])]
+        M_g = [g + 5 - 5*np.log10(1000/p) for g,p in zip(self.full_table.table["phot_g_mean_mag"], self.full_table.table["parallax"])]
         g_k = self.phot.subtract_cols("phot_g_mean_mag", "k_m")
         j_k = self.phot.subtract_cols("j_m", "k_m")
         w1_w2 = self.phot.subtract_cols("w1mpro", "w2mpro")
@@ -814,21 +814,21 @@ class Visualization:
 
         try:
             print("Applying photometric cuts...")
-            cut_true = self.full_table[pd.eval("""(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)""")]
-            cut_false = self.full_table[~pd.eval("""(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)""")]
+            cut_true = self.full_table.table[pd.eval("""(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)""")]
+            cut_false = self.full_table.table[~pd.eval("""(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)""")]
 
             cut_mg_true = [g + 5 - 5*np.log10(1000/p) for g,p in zip(cut_true["phot_g_mean_mag"], cut_true["parallax"])]
             cut_bprp_true = cut_true["bp_rp"]
             cut_mg_false = [g + 5 - 5*np.log10(1000/p) for g,p in zip(cut_false["phot_g_mean_mag"], cut_false["parallax"])]
             cut_bprp_false = cut_false["bp_rp"]
 
-            cut_1s = """(self.full_table["pmra"] < -1.81 +1.31) & (self.full_table["pmra"] > -1.81 -1.31) & (self.full_table["pmdec"] < -2.67 +1.44) & (self.full_table["pmdec"] > -2.67 -1.44)"""
+            cut_1s = """(self.full_table.table["pmra"] < -1.81 +1.31) & (self.full_table.table["pmra"] > -1.81 -1.31) & (self.full_table.table["pmdec"] < -2.67 +1.44) & (self.full_table.table["pmdec"] > -2.67 -1.44)"""
 
-            cut_2s = """(self.full_table["pmra"] < -1.81 +2*1.31) & (self.full_table["pmra"] > -1.81 -2*1.31) & (self.full_table["pmdec"] < -2.67 +2*1.44) & (self.full_table["pmdec"] > -2.67 -2*1.44)"""
+            cut_2s = """(self.full_table.table["pmra"] < -1.81 +2*1.31) & (self.full_table.table["pmra"] > -1.81 -2*1.31) & (self.full_table.table["pmdec"] < -2.67 +2*1.44) & (self.full_table.table["pmdec"] > -2.67 -2*1.44)"""
 
-            cut_outliers = """(self.full_table["pmra"] < 15) & (self.full_table["pmra"] > -15) & (self.full_table["pmdec"] < 15) & (self.full_table["pmdec"] > -15)"""
+            cut_outliers = """(self.full_table.table["pmra"] < 15) & (self.full_table.table["pmra"] > -15) & (self.full_table.table["pmdec"] < 15) & (self.full_table.table["pmdec"] > -15)"""
 
-            cut_plx_1s = """(self.full_table["parallax"]< 1.04+0.23) & (self.full_table["parallax"]> 1.04-0.23)"""
+            cut_plx_1s = """(self.full_table.table["parallax"]< 1.04+0.23) & (self.full_table.table["parallax"]> 1.04-0.23)"""
 
 
 

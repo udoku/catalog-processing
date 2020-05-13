@@ -26,6 +26,8 @@ import scipy.optimize
 import pandas as pd
 from tkinter import *
 
+from Photometry import *
+
 import hdbscan
 
 from getCI import *
@@ -136,7 +138,7 @@ class Astrometry:
 
         else:
 
-            histogram = self.make_hist(self.full_table[colname])
+            histogram = self.make_hist(self.full_table.table[colname])
 
         fit = scipy.optimize.curve_fit(self.gaussian, histogram[1], histogram[0][0])
 
@@ -161,25 +163,25 @@ class Astrometry:
 
         if verbose:
             print("Columns in supplied data table:")
-            print(table.colnames)
+            print(table.table.colnames)
             print("Columns to be used for clustering analysis:")
             print(columns)
 
         print("Initializing data structures...")
         data = []
-        candidates_table = table[:]
+        candidates_table = table.table[:]
         count = 0
 
         print("Selecting data...")
-        for i in range(len(table[columns[0]])):
+        for i in range(len(table.table[columns[0]])):
             datai=[]
             include_flag = True
             for c in columns:
-                if not (table[c][i] != None):
+                if not (table.table[c][i] != None):
                     include_flag = False
             if include_flag:
                 for c in columns:
-                    datai.append(table[c][i])
+                    datai.append(table.table[c][i])
                 data.append(datai)
             else:
                 candidates_table.remove_row(i-count)
@@ -219,7 +221,7 @@ class Astrometry:
 
         print("Detected " + str(max(membership) + 1) + " clusters")
         print("Clustering calculation complete.")#\n Detected " + str(max(membership)) + " clusters in a population of " + str(len(data_A)) " objects.")
-        return candidates_table, membership
+        return CatalogTable(table.catalogs, candidates_table), membership
 
     # TODO: needs documentation update
     # TODO: make cluster filters more robust/read in from file?
@@ -232,7 +234,7 @@ class Astrometry:
         for i in range(max(membership)):
             cut_string = "self.full_table['cluster_membership'] == " + str(i)
             members, _ = memberphot.apply_cut(cut_string)
-            if abs(np.mean(members['pmra'])) - np.std(members['pmra']) > 0 and abs(np.mean(members['pmdec'])) - np.std(members['pmdec']) > 0:
+            if abs(np.mean(members.table['pmra'])) - np.std(members.table['pmra']) > 0 and abs(np.mean(members.table['pmdec'])) - np.std(members.table['pmdec']) > 0:
                 #members_trimmed = self.find_cluster_members(members, columns)
                 clusters_data.append(members)
 
@@ -268,7 +270,7 @@ class Astrometry:
             cluster.remove_row(loglikelihoods_i.index(max(loglikelihoods_i)))
         #print(zip(loglikelihoods[:-1],loglikelihoods[1:]))
         diffs = [y-x for x, y in zip(loglikelihoods[:-1], loglikelihoods[1:])]
-        diffs2 = [y-x for x, y in zip(diffs[:-1], diffs[1:])]
+        #diffs2 = [y-x for x, y in zip(diffs[:-1], diffs[1:])]
         #diffsmedian = np.median(diffs)
 
         #index = len(diffs) - 1
@@ -316,15 +318,15 @@ class Astrometry:
     # TODO: shift to one function instead, and call with the desired parameter.
     def cluster_stats(self, cluster):
         pmra_hist = []
-        pmra_best = 0
+        #pmra_best = 0
         pmdec_hist = []
-        pmdec_best = 0
+        #pmdec_best = 0
         parallax_hist = []
-        parallax_best = 0
+        #parallax_best = 0
         ra_hist = []
-        ra_best = 0
+        #ra_best = 0
         dec_hist = []
-        dec_best = 0
+        #dec_best = 0
 
         pmra_vals = np.linspace(min(cluster['pmra']),max(cluster['pmra']),num=5*len(cluster['pmra']))
         pmdec_vals = np.linspace(min(cluster['pmdec']),max(cluster['pmdec']),num=5*len(cluster['pmdec']))
