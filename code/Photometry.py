@@ -32,6 +32,8 @@ from getCI import *
 
 from CatalogTable import *
 
+from code import path, logger, out
+
 class Photometry:
 
     # TODO: hunt down what self.non and full_column do?
@@ -328,7 +330,7 @@ class Photometry:
 
         self.cut_string = self.cut_string.strip().strip('and').strip()
 
-        print(self.cut_string)
+        out(self.cut_string)
         return self.apply_cut(self.cut_string)
 
     # TODO: see function above
@@ -491,7 +493,7 @@ class Photometry:
 
         self.cut_string = self.cut_string.strip().strip('and').strip()
 
-        print(self.cut_string)
+        out(self.cut_string)
         return self.apply_cut(self.cut_string)
 
     # TODO: replace with function that reads in cut from a file and performs that cut

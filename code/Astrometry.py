@@ -32,6 +32,8 @@ import hdbscan
 
 from getCI import *
 
+from code import path, logger, out
+
 # TODO: why is this a class?
 class Astrometry:
 
@@ -159,20 +161,20 @@ class Astrometry:
         #data = []
         #candidates_table = table[:]
 
-        print("Organizing clustering data...")
+        out("Organizing clustering data...")
 
         if verbose:
-            print("Columns in supplied data table:")
-            print(table.table.colnames)
-            print("Columns to be used for clustering analysis:")
-            print(columns)
+            out("Columns in supplied data table:")
+            out(table.table.colnames)
+            out("Columns to be used for clustering analysis:")
+            out(columns)
 
-        print("Initializing data structures...")
+        out("Initializing data structures...")
         data = []
         candidates_table = table.table[:]
         count = 0
 
-        print("Selecting data...")
+        out("Selecting data...")
         for i in range(len(table.table[columns[0]])):
             datai=[]
             include_flag = True
@@ -188,20 +190,20 @@ class Astrometry:
                 count += 1
 
         if verbose:
-            print("Columns in dataset: ")
-            print(len(data[0]))
-            print("Entries in dataset: ")
-            print(len(data))
+            out("Columns in dataset: ")
+            out(len(data[0]))
+            out("Entries in dataset: ")
+            out(len(data))
 
-        print("Calculating clusters...")
+        out("Calculating clusters...")
         #clusterer = hdbscan.HDBSCAN(min_cluster_size=(len(data_A) / 10))
         #clusterer = hdbscan.HDBSCAN(allow_single_cluster=False, min_cluster_size=(len(data_A)/20))
         if expected_clusters:
-            print("Iterating minimum cluster size...")
+            out("Iterating minimum cluster size...")
             
             iteration=1
             while(1):
-                print(str(iteration) + "%")
+                out(str(iteration) + "%")
                 min_cluster_size = abs(int(iteration * len(data) / 100))+ 1 # 1% of the data size
                 clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, min_samples=10)
 
@@ -219,8 +221,8 @@ class Astrometry:
             clusterer.fit(data)
             membership = clusterer.labels_
 
-        print("Detected " + str(max(membership) + 1) + " clusters")
-        print("Clustering calculation complete.")#\n Detected " + str(max(membership)) + " clusters in a population of " + str(len(data_A)) " objects.")
+        out("Detected " + str(max(membership) + 1) + " clusters")
+        out("Clustering calculation complete.")#\n Detected " + str(max(membership)) + " clusters in a population of " + str(len(data_A)) " objects.")
         return CatalogTable(table.catalogs, candidates_table), membership
 
     # TODO: needs documentation update
@@ -254,21 +256,21 @@ class Astrometry:
         while(len(cluster) > 0):
             cluster_size.append(len(cluster))
             cluster_members.append(cluster[:])
-            #print(len(cluster))
+            #out(len(cluster))
             loglikelihoods_i = []
             for i in range(len(cluster)):
                 likelihood_i = 0
-                #print(len(columns))
+                #out(len(columns))
                 for j in range(len(columns)):
-                    #print("column: " + str(columns[j]))
-                    #print("mean: " + str(means[j]))
-                    #print("stdev: " + str(stdevs[j]))
+                    #out("column: " + str(columns[j]))
+                    #out("mean: " + str(means[j]))
+                    #out("stdev: " + str(stdevs[j]))
                     likelihood_i += ((cluster[columns[j]][i] - means[j])/stdevs[j])**2
                 loglikelihoods_i.append(likelihood_i)
-                #print("likelihood: " + str(likelihood_i))
+                #out("likelihood: " + str(likelihood_i))
             loglikelihoods.append(np.mean(loglikelihoods_i))
             cluster.remove_row(loglikelihoods_i.index(max(loglikelihoods_i)))
-        #print(zip(loglikelihoods[:-1],loglikelihoods[1:]))
+        #out(zip(loglikelihoods[:-1],loglikelihoods[1:]))
         diffs = [y-x for x, y in zip(loglikelihoods[:-1], loglikelihoods[1:])]
         #diffs2 = [y-x for x, y in zip(diffs[:-1], diffs[1:])]
         #diffsmedian = np.median(diffs)
@@ -350,8 +352,8 @@ class Astrometry:
 
         most, low, high, _ = getCI(pmra_vals, pmra_actual, 0.68)
 
-        print("best pmra: " + str(most))
-        print("68 percent interval: " + str(low) + " to " + str(high))
+        out("best pmra: " + str(most))
+        out("68 percent interval: " + str(low) + " to " + str(high))
 
         fig = plt.figure()
         fig.clf()
@@ -380,8 +382,8 @@ class Astrometry:
 
         most, low, high, _ = getCI(pmdec_vals, pmdec_actual, 0.68)
 
-        print("best pmdec: " + str(most))
-        print("68 percent interval: " + str(low) + " to " + str(high))
+        out("best pmdec: " + str(most))
+        out("68 percent interval: " + str(low) + " to " + str(high))
 
         fig = plt.figure()
         fig.clf()
@@ -408,8 +410,8 @@ class Astrometry:
 
         most, low, high, _ = getCI(parallax_vals, parallax_actual, 0.68)
 
-        print("best parallax: " + str(most))
-        print("68 percent interval: " + str(low) + " to " + str(high))
+        out("best parallax: " + str(most))
+        out("68 percent interval: " + str(low) + " to " + str(high))
 
         fig = plt.figure()
         fig.clf()
@@ -436,8 +438,8 @@ class Astrometry:
 
         most, low, high, _ = getCI(ra_vals, ra_actual, 0.68)
 
-        print("best ra: " + str(most))
-        print("68 percent interval: " + str(low) + " to " + str(high))
+        out("best ra: " + str(most))
+        out("68 percent interval: " + str(low) + " to " + str(high))
 
         fig = plt.figure()
         fig.clf()
@@ -464,8 +466,8 @@ class Astrometry:
 
         most, low, high, _ = getCI(dec_vals, dec_actual, 0.68)
 
-        print("best dec: " + str(most))
-        print("68 percent interval: " + str(low) + " to " + str(high))
+        out("best dec: " + str(most))
+        out("68 percent interval: " + str(low) + " to " + str(high))
 
         fig = plt.figure()
         fig.clf()

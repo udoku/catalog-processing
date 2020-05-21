@@ -4,7 +4,7 @@ from Astrometry import *
 
 from CatalogProcessing import *
 
-from astrio import *
+from code import path, logger, out
 
 class Visualization:
 
@@ -91,10 +91,10 @@ class Visualization:
 
         """
 
-        print("fetching surveys:")
-        print(survey_list)
-        print("with radius:")
-        print(field_side_length)
+        out("fetching surveys:")
+        out(survey_list)
+        out("with radius:")
+        out(field_side_length)
 
         center=self.ra + self.dec
 
@@ -108,13 +108,13 @@ class Visualization:
 
 
 
-        #print(img_list)
+        #out(img_list)
 
         wcs_list = []
 
         for i in img_list:
 
-            #print(i[0])
+            #out(i[0])
 
             wcs_list.append(wcs.WCS(i[0].header))
 
@@ -142,7 +142,7 @@ class Visualization:
             ax.imshow(img_list[i][0].data, origin='lower', norm=norm, cmap='gray_r')
 
 
-            #print((formattedcoord_list[i].ra, formattedcoord_list[i].dec))
+            #out((formattedcoord_list[i].ra, formattedcoord_list[i].dec))
 
             if plot_coords:
 
@@ -186,7 +186,7 @@ class Visualization:
 
         #     coord_list.append((row[0], row[1]))
 
-        print("Adding coordinates of catalog objects...")
+        out("Adding coordinates of catalog objects...")
 
         try:
 
@@ -194,7 +194,7 @@ class Visualization:
 
             for cat in cats_to_plot:
 
-                print("Adding objects from " + str(cat))
+                out("Adding objects from " + str(cat))
 
                 cat_coord_list = []
                 count = 0
@@ -210,7 +210,7 @@ class Visualization:
                 
                 coord_list.append(cat_coord_list)
 
-                print("Added " + str(cat) + " coords: " + str(count) + " objects added.")
+                out("Added " + str(cat) + " coords: " + str(count) + " objects added.")
 
 
             #ra_min = min(min([coords[0] for coords in coord_list[cal]]) for cal in range(len(coord_list)))
@@ -226,11 +226,11 @@ class Visualization:
 
             #field_side_length = max((ra_max - ra_min, dec_max - dec_min))
 
-            print("Formatting coordinates...")
+            out("Formatting coordinates...")
 
             formatted_coord_list = [self.format_coords(cl) for cl in coord_list]
 
-            print("Finding minimum and maximum RA and DEC...")
+            out("Finding minimum and maximum RA and DEC...")
 
             ra_min = min(formatted_coord_list[0].ra)
 
@@ -240,13 +240,13 @@ class Visualization:
 
             dec_max = max(formatted_coord_list[0].dec)
 
-            print("Calculating field side length...")
+            out("Calculating field side length...")
 
             field_side_length = max((ra_max - ra_min, dec_max - dec_min))
 
             #formatted_coord_list = [self.format_coords(cl) for cl in coord_list]
 
-            print("Retrieving images...")
+            out("Retrieving images...")
 
             img_list = self.get_surveys(survey_list, field_side_length)
 
@@ -255,9 +255,9 @@ class Visualization:
 
         except TypeError as e:
 
-            print("TypeError occurred!")
+            out("TypeError occurred!")
 
-            print(e)
+            out(e)
 
             '''ra_min = min(self.full_table.table["gaia_ra"])
 
@@ -267,11 +267,11 @@ class Visualization:
 
             dec_max = max(self.full_table.table["gaia_dec"])
 
-            #print(ra_min, ra_max)
+            #out(ra_min, ra_max)
 
             field_side_length = max((ra_max - ra_min, dec_max - dec_min))
 
-            #print(field_side_length)
+            #out(field_side_length)
 
             img_list = self.get_surveys(survey_list, field_side_length*u.deg)
 
@@ -282,8 +282,8 @@ class Visualization:
         '''#formatted_coord_list = self.format_coords(coord_list)
         formatted_coord_list = [self.format_coords(cl) for cl in coord_list]
 
-        #print(type(formatted_coord_list))
-        #print(formatted_coord_list[0])
+        #out(type(formatted_coord_list))
+        #out(formatted_coord_list[0])
 
         ra_min = min(formatted_coord_list[0].ra)
 
@@ -293,23 +293,23 @@ class Visualization:
 
         dec_max = max(formatted_coord_list[0].dec)
 
-        #print(ra_min)
-        #print(ra_max)
-        #print(ra_max - ra_min)
+        #out(ra_min)
+        #out(ra_max)
+        #out(ra_max - ra_min)
 
 
 
         field_side_length = max((ra_max - ra_min, dec_max - dec_min))
 
-        #print(field_side_length)
+        #out(field_side_length)
 
 
         img_list = self.get_surveys(survey_list, field_side_length)
 
-        print("Number of surveys:")
-        print(len(survey_list))
-        print("Number of images:")
-        print(len(img_list))
+        out("Number of surveys:")
+        out(len(survey_list))
+        out("Number of images:")
+        out(len(img_list))
 
         self.plot_surveys(img_list, formatted_coord_list, survey_list)'''
 
@@ -323,7 +323,7 @@ class Visualization:
 
             column = phot.apply_cut(cut)[0].table[colname]
 
-            #print("column:")
+            #out("column:")
 
             #column.pprint(max_lines=-1)
 
@@ -372,7 +372,7 @@ class Visualization:
 
             fit = astrometry.fit_gaussian(colname)
 
-            #self.full_table.table[colname].pprint(max_lines=-1)
+            #self.full_table.table[colname].pout(max_lines=-1)
 
 
 
@@ -380,7 +380,7 @@ class Visualization:
 
 
 
-            #print(fit)
+            #out(fit)
 
 
 
@@ -410,7 +410,7 @@ class Visualization:
             param_data = self.full_table.table[parameter]
             param_error = self.full_table.table[parameter + "_error"]
         except:
-            print("Given parameter does not appear in the imported data. Check parameter name for consistency with full_table columns.")
+            out("Given parameter does not appear in the imported data. Check parameter name for consistency with full_table columns.")
 
         fractional = np.abs(100.* param_error / param_data)
 
@@ -439,7 +439,7 @@ class Visualization:
 
     def plot_list(self, colname_list):
 
-        #print(self.full_table.table[colname1], self.full_table.table[colname1])
+        #out(self.full_table.table[colname1], self.full_table.table[colname1])
 
 
 
@@ -465,7 +465,7 @@ class Visualization:
 
             ax.set_ylabel(colname_list[i][1] + " [{}]".format(self.full_table.table[colname_list[i][1]].unit), fontsize=14)
 
-            #print("hi")
+            #out("hi")
 
             ax.scatter(self.full_table.table[colname_list[i][0]], self.full_table.table[colname_list[i][1]], s=8, marker="o")
 
@@ -489,7 +489,7 @@ class Visualization:
 
         elif type(colname1[0]) is str:
 
-            #print("check")
+            #out("check")
 
             x = self.full_table.table[colname1[0]]
 
@@ -543,7 +543,7 @@ class Visualization:
 
             plt.gca().invert_xaxis()
 
-        #print(type(x), type(y))
+        #out(type(x), type(y))
 
 
 
@@ -619,7 +619,7 @@ class Visualization:
 
             #elif type(col_tup[2]) is str:
 
-            #    #print("check")
+            #    #out("check")
 
             #    x = self.full_table.table[col_tup[0]]
 
@@ -659,7 +659,7 @@ class Visualization:
 
             #    ax.set_ylim(lims[i][1]
 
-            #print(type(x), type(y))
+            #out(type(x), type(y))
 
 
 
@@ -777,9 +777,9 @@ class Visualization:
             ylabel = str(col2[1]) + " [{}]".format(tables[0].table[col2[0]].unit)
 
         except KeyError as e:
-            print("The specified colname does not match a column in the provided tables. " + 
+            out("The specified colname does not match a column in the provided tables. " + 
                   "This might occur if you have provided a (column name, column description) tuple with an invalid column name, or if you have provided a single string instead of a tuple.")
-            print(e)
+            out(e)
 
         tuples = []
 
@@ -787,7 +787,7 @@ class Visualization:
             try:
                 tuples.append((t.table[col1[0]], t.table[col2[0]]))
             except KeyError as e:
-                print("Table " + str(tables.index(t)) + " does not include column " + e)
+                out("Table " + str(tables.index(t)) + " does not include column " + e)
         
         self.plot_tuples(title, tuples, xlabel, ylabel, xlim = xlim, ylim = ylim, invert_x = invert_x, invert_y = invert_y, squared=squared)
 
@@ -800,7 +800,7 @@ class Visualization:
         
         # define variables
 
-        print("Computing photometric variables...")
+        out("Computing photometric variables...")
         M_g = [g + 5 - 5*np.log10(1000/p) for g,p in zip(self.full_table.table["phot_g_mean_mag"], self.full_table.table["parallax"])]
         g_k = self.phot.subtract_cols("phot_g_mean_mag", "k_m")
         j_k = self.phot.subtract_cols("j_m", "k_m")
@@ -813,7 +813,7 @@ class Visualization:
         k_w3 = self.phot.subtract_cols("k_m", "w3mpro")
 
         try:
-            print("Applying photometric cuts...")
+            out("Applying photometric cuts...")
             cut_true = self.full_table.table[pd.eval("""(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)""")]
             cut_false = self.full_table.table[~pd.eval("""(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)""")]
 
@@ -834,85 +834,85 @@ class Visualization:
 
             # generate and display plots with documentation
 
-            print("2mass RA vs 2mass Dec. J-H > 0.7 shown in black, J-H < 0.7 shown in red.")
+            out("2mass RA vs 2mass Dec. J-H > 0.7 shown in black, J-H < 0.7 shown in red.")
             self.cut_and_plot("J-H > 0.7", ("2mass_ra", "2mass RA"), ("2mass_dec", "2mass Dec"), squared=True, invert_x=True)
 
-            print("Gaia RA vs Gaia Dec.")
+            out("Gaia RA vs Gaia Dec.")
             self.plot(("gaia_ra", "Gaia RA"), ("gaia_dec", "Gaia Dec"), squared=True, invert_x=True )
 
-            print("Gaia PM RA vs Gaia PM Dec.")
+            out("Gaia PM RA vs Gaia PM Dec.")
             self.plot(("pmra", "pm RA (Gaia)"), ("pmdec", "pm Dec (Gaia)"), xlim=(-30,30), ylim=(-30,30), squared=True)
 
-            print("Gaia PM RA vs Gaia PM Dec (closer detail).")
+            out("Gaia PM RA vs Gaia PM Dec (closer detail).")
             self.plot(("pmra", "pm RA (Gaia)"), ("pmdec", "pm Dec (Gaia)"), xlim=(-10,10), ylim=(-10,10), squared=True)
 
-            print("Parallax vs Gaia Dec.")
+            out("Parallax vs Gaia Dec.")
             self.plot(("parallax", "Parallax"), ("gaia_dec", "Dec (Gaia)"), xlim=(0,5))
 
-            #print("what does double_plot do?")
+            #out("what does double_plot do?")
             #self.double_plot([("pmra", "pmdec"), ("pmra", "pmdec")], [(-20,20), (-10, 10)])
 
-            print("BP/RP vs G Mean Magnitude.")
+            out("BP/RP vs G Mean Magnitude.")
             self.plot("bp_rp", "phot_g_mean_mag")
 
-            print("BP/RP vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
+            out("BP/RP vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
             self.plot("bp_rp", (M_g, "$M_G [mag]$"))
 
-            print("G-K Magnitude vs G Mean Magnitude.")
+            out("G-K Magnitude vs G Mean Magnitude.")
             self.plot((g_k, "G-K [mag]"), "phot_g_mean_mag")
 
-            print("G-K Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
+            out("G-K Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
             self.plot((g_k, "G-K [mag]"), (M_g, "$M_G [mag]$"))
 
-            print("J-K Magnitude vs J-M Magnitude.")
+            out("J-K Magnitude vs J-M Magnitude.")
             self.plot((j_k, "J-K [mag]"), "j_m")
 
-            print("W1-W2 Magnitude vs W1 Magnitude.")
+            out("W1-W2 Magnitude vs W1 Magnitude.")
             self.plot((w1_w2, "W1-W2 [mag]"), "w1mpro")
 
-            print("J-H Magnitude vs H-K Magnitude.")
+            out("J-H Magnitude vs H-K Magnitude.")
             self.plot((j_h, "J-H [mag]"), (h_k, "H-K [mag]"))
 
-            print("G-H Magnitude vs H-K Magnitude.")
+            out("G-H Magnitude vs H-K Magnitude.")
             self.plot((g_h, "G-H [mag]"), (h_k, "H-K [mag]"))
 
-            print("K-W2 Magnitude vs G-K Magnitude.")
+            out("K-W2 Magnitude vs G-K Magnitude.")
             self.plot((k_w2, "K - W2 [mag]"), (g_k, "G - K [mag]")) 
 
-            print("BP/RP Magnitude vs G Mean Magnitude.")
+            out("BP/RP Magnitude vs G Mean Magnitude.")
             self.plot("bp_rp", "phot_g_mean_mag", invert_y=True)
 
-            print("2mass RA vs 2mass Dec. K-W1 > 0.2 shown in black, K-w1 < 0.2 shown in red.")
+            out("2mass RA vs 2mass Dec. K-W1 > 0.2 shown in black, K-w1 < 0.2 shown in red.")
             self.cut_and_plot("K-W1 > 0.2", ("2mass_ra", "RA"), ("2mass_dec", "Dec"), squared=True)
 
-            print("PMRA vs PMDec. -3.12 < PMRA < -0.5 AND -4.17 < PMDec < -1.23 shown in black, otherwise shown in red. Units in mas/yr.")
+            out("PMRA vs PMDec. -3.12 < PMRA < -0.5 AND -4.17 < PMDec < -1.23 shown in black, otherwise shown in red. Units in mas/yr.")
             self.cut_and_plot(cut_1s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-10,10), ylim=(-10,10), squared=True)
 
-            print("PMRA vs PMDec - closer detail. -3.12 < PMRA < -0.5 AND -4.17 < PMDec < -1.23 shown in black, otherwise shown in red. Units in mas/yr.")
+            out("PMRA vs PMDec - closer detail. -3.12 < PMRA < -0.5 AND -4.17 < PMDec < -1.23 shown in black, otherwise shown in red. Units in mas/yr.")
             self.cut_and_plot(cut_1s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-6,1), ylim=(-6,1), squared=True)
 
-            print("PMRA vs PMDec. -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21 shown in black, otherwise shown in red. Units in mas/yr.")
+            out("PMRA vs PMDec. -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21 shown in black, otherwise shown in red. Units in mas/yr.")
             self.cut_and_plot(cut_2s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-10,10), ylim=(-10,10), squared=True)
 
-            print("PMRA vs PMDec - closer detail. -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21 shown in black, otherwise shown in red. Units in mas/yr.")
+            out("PMRA vs PMDec - closer detail. -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21 shown in black, otherwise shown in red. Units in mas/yr.")
             self.cut_and_plot(cut_2s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-6,1), ylim=(-6,1), squared=True)
 
-            print("Parallax vs PMRA. 0.81 < Parallax < 1.27 shown in black, otherwise shown in red.")
+            out("Parallax vs PMRA. 0.81 < Parallax < 1.27 shown in black, otherwise shown in red.")
             self.cut_and_plot(cut_plx_1s, ("parallax", "Parallax"),("pmra", "pm RA"), xlim=(0,5), squared=True)
 
-            print("PMRA histogram. Data shown satisfy -15 < PMRA < 15 AND -15 < PMDec < 15. Units in mas/yr.")
+            out("PMRA histogram. Data shown satisfy -15 < PMRA < 15 AND -15 < PMDec < 15. Units in mas/yr.")
             self.plot_hist("pmra", "pm RA", cut=cut_outliers)
 
-            print("PMDec histogram. Data shown satisfy -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21. Units in mas/yr.")
+            out("PMDec histogram. Data shown satisfy -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21. Units in mas/yr.")
             self.plot_hist("pmdec", "pm Dec", cut=cut_2s)
 
-            print("BP-RP Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
+            out("BP-RP Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
             self.plot_removed([(cut_bprp_true, cut_mg_true), (cut_bprp_false, cut_mg_false)], "BP - RP", "$M_G$", invert_y=True)
 
-            print("BP-RP Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax )). More detail.")
+            out("BP-RP Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax )). More detail.")
             self.plot_removed([(cut_bprp_true, cut_mg_true), (cut_bprp_false, cut_mg_false)], "BP - RP", "$M_G$", xlim=(0.1,3.5), ylim=(-1, 15), invert_y=True)
         except:
-            print("An error occurred while plotting diagnostics. This usually occurs because no sources passed a photometric cut.")
+            out("An error occurred while plotting diagnostics. This usually occurs because no sources passed a photometric cut.")
 
     def plot_clusters(self, table, membership, column_A, column_B, xlim= None, ylim=None, invert_x=False, invert_y=True, squared=True):
         # create pyplot object
@@ -935,7 +935,7 @@ class Visualization:
         ax.scatter(A_none, B_none)
 
         for i in range(max(membership)+1):
-            print("plotting cluster" + str(i))
+            out("plotting cluster" + str(i))
             A_i = []
             B_i = []
             for j in range(len(membership)):

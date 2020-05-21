@@ -25,6 +25,10 @@ import numpy as np
 
 #from getCI import *
 
+import os
+from datetime import datetime
+from code import path, logger, out
+
 from CatalogTable import *
 
 class catalogProcessing:
@@ -44,36 +48,36 @@ class catalogProcessing:
 
     """
 
-    def __init__(self, ra, dec, radius, parallax=None, io=None):
+    def __init__(self, ra, dec, radius, parallax=None):
 
         #self.skycoord = SkyCoord(HAeBe_coord, unit=(u.hourangle, u.deg))
-        self.skycoord = SkyCoord(ra, dec)
 
-        self.radius = radius
+        out("Initializing CatalogProcessing: ra={}, dec={}, radius={}".format(ra, dec, radius))
+
+        self.skycoord = SkyCoord(ra, dec)
 
         self.parallax = parallax
 
-        self.io = io
-
+        self.path = path
 
         if self.parallax == None:
 
-            pass
+            self.radius = radius
 
         else:
 
             self.radius = self.get_radius()
 
-
-        print("Querying Gaia...")
+        out("Querying Gaia...")
         self.gaia = self.gaia_query()
-        print("Done querying Gaia!\n")
-        print("Querying 2MASS...")
-        self.tmass = self.ir_query("fp_psc")
-        print("Done querying 2MASS!\n")
-        print("Querying AllWISE...")
-        self.allwise = self.ir_query("allwise_p3as_psd")
-        print("Done querying AllWISE!\n")
+        self.gaia.catalogs = ["gaia"]
+        out("Done querying Gaia!\n")
+        out("Querying 2MASS...")
+        self.tmass = self.ir_query("tmass")
+        out("Done querying 2MASS!\n")
+        out("Querying AllWISE...")
+        self.allwise = self.ir_query("allwise")
+        out("Done querying AllWISE!\n")
         # other catalogs to be added
 
     def get_radius(self):
@@ -134,7 +138,7 @@ class catalogProcessing:
 
         #try:
 
-        print("Creating query...")
+        out("Creating query...")
         job = Gaia.launch_job_async(search_string, dump_to_file=False)
 
         #except gaierror as e:
@@ -145,12 +149,18 @@ class catalogProcessing:
 
         #    else:
 
-        #        print("This error is typically raised when there is no internet connection.")
+        #        out("This error is typically raised when there is no internet connection.")
 
         #        raise
 
-        print("Retrieving results...")
+        out("Retrieving results...")
         query_results = job.get_results()
+
+        out("Results retrieved. " + str(len(query_results['designation'])) + " sources detected.")
+
+        # write Gaia query results to file
+        fname = self.path + "/gaia_query.dat"
+        query_results.write(fname, format="ascii")
 
         return(CatalogTable(catalog,query_results))
 
@@ -193,21 +203,30 @@ class catalogProcessing:
 
         """
 
-        catalog = [ircat_name]
+        catalogs = {"allwise": "allwise_p3as_psd", "tmass": "fp_psc", "glimpse": "glimpse_s07" }
 
-        search_string = "SELECT * FROM {} WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',{},{},{}))=1 ".format(ircat_name, str(self.skycoord.ra.degree), str(self.skycoord.dec.degree), self.radius)
+        catalog = catalogs[ircat_name]
+
+        search_string = "SELECT * FROM {} WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',{},{},{}))=1 ".format(catalog, str(self.skycoord.ra.degree), str(self.skycoord.dec.degree), self.radius)
 
         if view_adql:
-            print(search_string)
+            out(search_string)
 
         ipac = TapPlus(url="https://irsa.ipac.caltech.edu/TAP/")
 
-        print("Creating query...")
+        out("Creating query...")
         job = ipac.launch_job_async(search_string)
 
+        out("Retrieving results...")
+        query_results = job.get_results()
 
-        print("Retrieving results...")
-        return(CatalogTable(catalog,job.get_results()))
+        out("Results retrieved. " + str(len(query_results['designation'])) + " sources detected.")
+
+        # Write query results to file.
+        fname = self.path + "/" + ircat_name + "_query.dat"
+        query_results.write(fname, format="ascii")
+
+        return(CatalogTable([ircat_name],query_results))
 
     # TODO: needs documentation updates
     # TODO: needs better error handling
@@ -326,8 +345,8 @@ class catalogProcessing:
 
                     pass
 
-                # indpair[1] is 2d distance (projected onto the sky) between the source in catalog 1
-                # and the matched source in catalog 2
+                # indpair[1] is 2d distance (projected onto the sky) between 
+                # the source in catalog 1 and the matched source in catalog 2
                 dist = indpair[1].arcsec
 
                 #const = coordinates.Angle(match_constraint*u.arcsec)
@@ -339,8 +358,9 @@ class catalogProcessing:
                     new_idx = np.delete(new_idx, j)
                     new_d2d = np.delete(new_d2d, j)
 
-                    # subtract 1 from the index under consideration because we just deleted the entry
-                    # we were looking at, and we'll increment j at the end of the loop - this ensures
+                    # subtract 1 from the index under consideration because we 
+                    # just deleted the entry we were looking at, and we'll 
+                    # increment j at the end of the loop - this ensures
                     # we stay at the same index.
                     j-=1
 
@@ -463,16 +483,15 @@ class catalogProcessing:
         id_1, id_2: The name by which to identify similar objects (such as gaia designation)
 
         """
+        dtype = table2.table.dtype
+        dtype2 = []
+        for n in dtype.names:
+            dtype2.append(dtype[n])
 
-        diff_table = table2.table
+        diff_table = Table(names=table2.table.colnames, dtype=dtype2)
 
-
-        gaia_mask_shape = [-1 for i in range(len(gaia_cat.table.colnames))]
-
-        tmass_mask_shape = [-1 for i in range(len(tmass_cat.table.colnames))]
-
-        allwise_mask_shape = [-1 for i in range(len(allwise_cat.table.colnames))]
-
+        t2cols = table2.table.colnames
+        t1cols = table1.table.colnames
 
         for row in table1.table:
 
@@ -482,57 +501,18 @@ class catalogProcessing:
 
             else:
 
-                row_as_list = [i for i in row]
-
-
-
                 full_row = []
 
-
-
-                if "gaia" in not_in_table1:
-
-                    full_row = full_row + gaia_mask_shape
-
-                else:
-
-                    full_row = full_row + row_as_list
-
-
-
-                if "2mass" in not_in_table1:
-
-                    full_row = full_row + tmass_mask_shape
-
-                elif not "gaia" in not_in_table1:
-
-                    pass
-
-                else:
-
-                    full_row = full_row + row_as_list
-
-
-
-                if "allwise" in not_in_table1:
-
-                    full_row = full_row + allwise_mask_shape
-
-                elif not "2mass" in not_in_table1:
-
-                    pass
-
-                else:
-
-                    full_row = full_row + row_as_list
-
+                for col in t2cols:
+                    if col in t1cols:
+                        full_row.append(row[col])
+                    else:
+                        full_row.append(-1)
 
 
                 mask = [i is -1 for i in full_row]
 
                 diff_table.add_row(full_row, mask=mask)
-
-
 
         return(diff_table)
 
@@ -596,9 +576,9 @@ class catalogProcessing:
             "designation", "ra", "dec", "sigra", "sigdec", "w1mpro", "w2mpro", "w3mpro", "w4mpro", "w1sigmpro", "w2sigmpro", "w3sigmpro", "w4sigmpro", "w4snr"
         """
 
-        print("\nGenerating full table...")
+        out("\nGenerating full table...")
 
-        print("Extracting specified data columns...")
+        out("Extracting specified data columns...")
 
         if gen_small_table:
 
@@ -620,7 +600,7 @@ class catalogProcessing:
             allwise_cat = self.allwise
 
         # rename columns to avoid name collisions later
-        print("Renaming columns...")
+        out("Renaming columns...")
 
         gaia_cat.table.rename_column("designation", "gaia_designation")
         gaia_cat.table.rename_column("ra", "gaia_ra")
@@ -634,84 +614,101 @@ class catalogProcessing:
         allwise_cat.table.rename_column("ra", "allwise_ra")
         allwise_cat.table.rename_column("dec", "allwise_dec")
 
-        print("Crossmatching Gaia with 2MASS...")
+
+
+        out("Crossmatching Gaia with 2MASS...")
         gaia_X_tmass = self.merge_tables(gaia_cat, tmass_cat)
 
-
-        print("Crossmatching Gaia with AllWISE...")
+        out("Crossmatching Gaia with AllWISE...")
         gaia_X_allwise = self.merge_tables(gaia_cat, allwise_cat)
 
-
-        print("Crossmatching 2MASS with AllWISE...")
+        out("Crossmatching 2MASS with AllWISE...")
         tmass_X_allwise = self.merge_tables(tmass_cat, allwise_cat)
 
-
+        out("Crossmatching all three catalogs...")
         gaia_X_tmass_X_allwise = self.merge_tables(gaia_X_tmass,  allwise_cat)
         
+        out(str(len(gaia_X_tmass_X_allwise.table['gaia_designation'])) + " sources in all three catalogs.")
+
         full_table = gaia_X_tmass_X_allwise
 
-        print("Adding objects that do not appear in all catalogs...")
+        out("Adding objects that do not appear in all catalogs...")
 
-        # objects in gaia_X_tmass_table that are not in gaia_X_tmass_X_allwise, i.e. objects in Gaia and Tmass but not Allwise
-        diff1 = self.table_difference(gaia_X_tmass, gaia_X_tmass_X_allwise, "gaia_designation", "gaia_designation", ["allwise"], gaia_cat, tmass_cat, allwise_cat)
-        full_table.table = vstack(full_table.table, diff1)
+        # sources in gaia_X_tmass that are not in gaia_X_tmass_X_allwise
+        # i.e. sources in Gaia and Tmass but not Allwise
+        diff1 = self.table_difference(gaia_X_tmass, full_table, "gaia_designation", "gaia_designation", ["allwise"], gaia_cat, tmass_cat, allwise_cat)
+        out(str(len(diff1['gaia_designation'])) + " sources in Gaia and 2MASS but not AllWISE.")
+        full_table.table = vstack([full_table.table, diff1])
+
+        # sources in gaia_X_allwise that are not in gaia_X_tmass_X_allwise
+        # i.e. sources in Gaia and Allwise but not Tmass.
+        diff2 = self.table_difference(gaia_X_allwise, full_table, "gaia_designation", "gaia_designation", ["2mass"], gaia_cat, tmass_cat, allwise_cat)
+        out(str(len(diff2['gaia_designation'])) + " sources in Gaia and AllWISE but not 2MASS.")
+        full_table.table = vstack([full_table.table, diff2])
+
+        # objects in tmass_X_allwise that are not in gaia_X_tmass_X_allwise, 
+        # i.e. sources in tmass and allwise but not gaia.
+        diff3 = self.table_difference(tmass_X_allwise, full_table, "allwise_designation", "allwise_designation", ["gaia"], gaia_cat, tmass_cat, allwise_cat)
+        out(str(len(diff3['allwise_designation'])) + " sources in 2MASS and AllWISE but not Gaia.")
+        full_table.table = vstack([full_table.table, diff3])
+
+        # objects in gaia but not yet in full_table
+        diff4 = self.table_difference(gaia_cat, full_table, "gaia_designation", "gaia_designation", ["2mass", "allwise"], gaia_cat, tmass_cat, allwise_cat)
+        out(str(len(diff4['gaia_designation'])) + " sources in Gaia only.")
+        full_table.table = vstack([full_table.table, diff4])
+
+        # objects in tmass but not yet in full_table
+        diff5 = self.table_difference(tmass_cat, full_table, "2mass_designation", "2mass_designation", ["gaia", "allwise"], gaia_cat, tmass_cat, allwise_cat)
+        out(str(len(diff5['2mass_designation'])) + " sources in 2mass only.")
+        full_table.table = vstack([full_table.table, diff5])
+
+        # objects in allwise but not yet in full_table
+        diff6 = self.table_difference(allwise_cat, full_table, "allwise_designation", "allwise_designation", ["gaia", "2mass"], gaia_cat, tmass_cat, allwise_cat)
+        out(str(len(diff6['allwise_designation'])) + " sources in AllWISE only.")
+        full_table.table  = vstack([full_table.table, diff6])
 
 
-        # objects in gaia_cat that are not in full_table, i.e. objects that are in gaia but NOT in (all three catalogs, or both gaia and tmass)
-        diff2 = self.table_difference(gaia_cat, full_table, "gaia_designation", "gaia_designation", ["2mass", "allwise"], gaia_cat, tmass_cat, allwise_cat)
-        full_table.table = vstack(full_table.table, diff2)
+        out("Computing user-defined columns...")
 
-
-        # objects in tmass_X_allwise but not in gaia
-        diff3 = self.table_difference(tmass_X_allwise, full_table, "2mass_designation", "2mass_designation", ["gaia"], gaia_cat, tmass_cat, allwise_cat)
-        full_table.table = vstack(full_table.table, diff3)
-
-
-        # objects in tmass but not in gaia or allwise
-        diff4 = self.table_difference(tmass_cat, full_table, "2mass_designation", "2mass_designation", ["gaia", "allwise"], gaia_cat, tmass_cat, allwise_cat)
-        full_table.table = vstack(full_table.table, diff4)
-
-
-        # objects in allwise but not in (gaia OR tmass_X_allwise OR all three OR gaia_X_tmass OR tmass)
-        diff5 = self.table_difference(allwise_cat, full_table, "allwise_designation", "allwise_designation", ["gaia", "2mass"], gaia_cat, tmass_cat, allwise_cat)
-        full_table.table  = vstack(full_table.table, diff5)
-
-        print("Computing user-defined columns...")
-        print("Variability...")
+        out("Variability...")
         v = np.sqrt(full_table.table['phot_g_n_obs']/full_table.table['phot_g_mean_flux_over_error'])
         v.name="variability"
         v.unit="(n_obs / mag)^0.5"
         full_table.table.add_column(v)
 
-        print("Radial distance...")
+        out("Radial distance...")
         d = 1000 / full_table.table['parallax']
         d.name = "radial_distance"
         d.unit="pc"
         full_table.table.add_column(d)
 
         # summary statistics for data
-        '''print("Full table generated. Summary:")
-        print("\nGaia:")
-        print("Total rows: "+ str(len(full_table['gaia_designation'])))
-        print("G: " + str(len(full_table['phot_g_mean_mag'].mask.nonzero()[0])))
-        print("BP: " + str(len(full_table['phot_bp_mean_mag'].mask.nonzero()[0])))
-        print("RP: " + str(len(full_table['phot_rp_mean_mag'].mask.nonzero()[0])))
-        print("PLX: " + str(len(full_table['parallax'].mask.nonzero()[0])))
-        print("PMRA: " + str(len(full_table['pmra'].mask.nonzero()[0])))
-        print("PMDEC: " + str(len(full_table['pmdec'].mask.nonzero()[0])))
+        out("Full table generated.")
+        """out("Summary:")
+        out("\nGaia:")
+        out("Total rows: "+ str(len(full_table.table['gaia_designation'].mask.nonzero()[0])))
+        out("G: " + str(len(full_table.table['phot_g_mean_mag'].mask.nonzero()[0])))
+        out("BP: " + str(len(full_table.table['phot_bp_mean_mag'].mask.nonzero()[0])))
+        out("RP: " + str(len(full_table.table['phot_rp_mean_mag'].mask.nonzero()[0])))
+        out("PLX: " + str(len(full_table.table['parallax'].mask.nonzero()[0])))
+        out("PMRA: " + str(len(full_table.table['pmra'].mask.nonzero()[0])))
+        out("PMDEC: " + str(len(full_table.table['pmdec'].mask.nonzero()[0])))
 
-        print("\n2MASS:")
-        print("Total rows: " +str(len(full_table['2mass_designation'])))
-        print("J: " + str(len(full_table['j_m'].mask.nonzero()[0])))
-        print("H: " + str(len(full_table['h_m'].mask.nonzero()[0])))
-        print("K: " + str(len(full_table['k_m'].mask.nonzero()[0])))
+        out("\n2MASS:")
+        out("Total rows: " +str(len(full_table.table['2mass_designation'].mask.nonzero()[0])))
+        out("J: " + str(len(full_table.table['j_m'].mask.nonzero()[0])))
+        out("H: " + str(len(full_table.table['h_m'].mask.nonzero()[0])))
+        out("K: " + str(len(full_table.table['k_m'].mask.nonzero()[0])))
 
-        print("\nallwise:")
-        print("Total rows: " + str(len(full_table['allwise_designation'])))
-        print("W1: " + str(len(full_table['w1mpro'].mask.nonzero()[0])))
-        print("W2: " + str(len(full_table['w2mpro'].mask.nonzero()[0])))
-        print("W3: " + str(len(full_table['w3mpro'].mask.nonzero()[0])))
-        print("W4: " + str(len(full_table['w4mpro'].mask.nonzero()[0])))'''
+        out("\nallwise:")
+        out("Total rows: " + str(len(full_table.table['allwise_designation'].mask.nonzero()[0])))
+        out("W1: " + str(len(full_table.table['w1mpro'].mask.nonzero()[0])))
+        out("W2: " + str(len(full_table.table['w2mpro'].mask.nonzero()[0])))
+        out("W3: " + str(len(full_table.table['w3mpro'].mask.nonzero()[0])))
+        out("W4: " + str(len(full_table.table['w4mpro'].mask.nonzero()[0])))"""
+
+        fname = self.path + "/full_table.dat"
+        full_table.table.write(fname, format="ascii")
 
         return(full_table)
 
