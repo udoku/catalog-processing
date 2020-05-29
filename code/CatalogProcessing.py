@@ -770,3 +770,60 @@ class catalogProcessing:
                 reduced_table.add_row(vals=table[row_ind],mask=mask)
 
         return(reduced_table)
+
+    # TODO: Needs documentation update
+    def get_surveys(self, survey_list, field_side_length):
+
+        """
+
+        Center: skycoord coordinate+
+
+        survey_list: list or iterable consisting of strings in the form of SkyView surveynames.
+
+        Full description of all the surveys availible can be found here:
+
+        https://skyview.gsfc.nasa.gov/current/cgi/survey.plhttps://skyview.gsfc.nasa.gov/current/cgi/survey.pl
+
+
+        Some surveynames are:
+
+        "2MASS-J"
+
+        "2MASS-H"
+
+        "2MASS-K"
+
+        "WISE 3.4"
+
+        "WISE 4.6"
+
+        "WISE 12"
+
+        "WISE 22"
+
+        "DSS"
+
+        "SDSSg"
+
+        "SDSSi"
+
+        "SDSSr"
+
+        "SDSSu"
+
+        "SDSSz"
+
+
+        Returns a list of astropy.fits.HDUList objects. All elements of this
+        list have an attribute "".data" that can be passed to plt.imshow().
+
+        """
+
+        out("fetching surveys:")
+        out(survey_list)
+        out("with radius:")
+        out(field_side_length)
+
+        center=self.skycoord.ra.degree + self.skycoord.dec.degree
+
+        return(SkyView.get_images(position=center, survey=survey_list, radius=(field_side_length)))

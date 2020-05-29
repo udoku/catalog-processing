@@ -812,23 +812,20 @@ class Visualization:
         k_w2 = self.phot.subtract_cols("k_m", "w2mpro")
         k_w3 = self.phot.subtract_cols("k_m", "w3mpro")
 
+        out("Applying photometric cuts...")
+
         try:
-            out("Applying photometric cuts...")
-            cut_true = self.full_table.table[pd.eval("""(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)""")]
-            cut_false = self.full_table.table[~pd.eval("""(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)""")]
 
-            cut_mg_true = [g + 5 - 5*np.log10(1000/p) for g,p in zip(cut_true["phot_g_mean_mag"], cut_true["parallax"])]
-            cut_bprp_true = cut_true["bp_rp"]
-            cut_mg_false = [g + 5 - 5*np.log10(1000/p) for g,p in zip(cut_false["phot_g_mean_mag"], cut_false["parallax"])]
-            cut_bprp_false = cut_false["bp_rp"]
+            
+            # These are all unused
 
-            cut_1s = """(self.full_table.table["pmra"] < -1.81 +1.31) & (self.full_table.table["pmra"] > -1.81 -1.31) & (self.full_table.table["pmdec"] < -2.67 +1.44) & (self.full_table.table["pmdec"] > -2.67 -1.44)"""
+            #cut_1s = """(self.full_table.table["pmra"] < -1.81 +1.31) & (self.full_table.table["pmra"] > -1.81 -1.31) & (self.full_table.table["pmdec"] < -2.67 +1.44) & (self.full_table.table["pmdec"] > -2.67 -1.44)"""
 
-            cut_2s = """(self.full_table.table["pmra"] < -1.81 +2*1.31) & (self.full_table.table["pmra"] > -1.81 -2*1.31) & (self.full_table.table["pmdec"] < -2.67 +2*1.44) & (self.full_table.table["pmdec"] > -2.67 -2*1.44)"""
+            #cut_2s = """(self.full_table.table["pmra"] < -1.81 +2*1.31) & (self.full_table.table["pmra"] > -1.81 -2*1.31) & (self.full_table.table["pmdec"] < -2.67 +2*1.44) & (self.full_table.table["pmdec"] > -2.67 -2*1.44)"""
 
-            cut_outliers = """(self.full_table.table["pmra"] < 15) & (self.full_table.table["pmra"] > -15) & (self.full_table.table["pmdec"] < 15) & (self.full_table.table["pmdec"] > -15)"""
+            #cut_outliers = """(self.full_table.table["pmra"] < 15) & (self.full_table.table["pmra"] > -15) & (self.full_table.table["pmdec"] < 15) & (self.full_table.table["pmdec"] > -15)"""
 
-            cut_plx_1s = """(self.full_table.table["parallax"]< 1.04+0.23) & (self.full_table.table["parallax"]> 1.04-0.23)"""
+            #cut_plx_1s = """(self.full_table.table["parallax"]< 1.04+0.23) & (self.full_table.table["parallax"]> 1.04-0.23)"""
 
 
 
@@ -848,9 +845,6 @@ class Visualization:
 
             out("Parallax vs Gaia Dec.")
             self.plot(("parallax", "Parallax"), ("gaia_dec", "Dec (Gaia)"), xlim=(0,5))
-
-            #out("what does double_plot do?")
-            #self.double_plot([("pmra", "pmdec"), ("pmra", "pmdec")], [(-20,20), (-10, 10)])
 
             out("BP/RP vs G Mean Magnitude.")
             self.plot("bp_rp", "phot_g_mean_mag")
@@ -906,13 +900,30 @@ class Visualization:
             out("PMDec histogram. Data shown satisfy -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21. Units in mas/yr.")
             self.plot_hist("pmdec", "pm Dec", cut=cut_2s)
 
+        except:
+            out("An error occurred while plotting diagnostics. This usually occurs because no sources passed a photometric cut.")
+
+        try:
+            # Lots of magic numbers here.
+            cut_string = """(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)"""
+
+            out(cut_string)
+            cut_true = self.full_table.table[pd.eval(cut_string)]
+            cut_false = self.full_table.table[~pd.eval(cut_string)]
+
+            cut_mg_true = [g + 5 - 5*np.log10(1000/p) for g,p in zip(cut_true["phot_g_mean_mag"], cut_true["parallax"])]
+            cut_mg_false = [g + 5 - 5*np.log10(1000/p) for g,p in zip(cut_false["phot_g_mean_mag"], cut_false["parallax"])]
+
+            cut_bprp_true = cut_true["bp_rp"]
+            cut_bprp_false = cut_false["bp_rp"]
+
             out("BP-RP Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
             self.plot_removed([(cut_bprp_true, cut_mg_true), (cut_bprp_false, cut_mg_false)], "BP - RP", "$M_G$", invert_y=True)
 
             out("BP-RP Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax )). More detail.")
             self.plot_removed([(cut_bprp_true, cut_mg_true), (cut_bprp_false, cut_mg_false)], "BP - RP", "$M_G$", xlim=(0.1,3.5), ylim=(-1, 15), invert_y=True)
         except:
-            out("An error occurred while plotting diagnostics. This usually occurs because no sources passed a photometric cut.")
+            out("Encountered an error applying this cut. This usually occurs when no sources pass the photometric cut.")
 
     def plot_clusters(self, table, membership, column_A, column_B, xlim= None, ylim=None, invert_x=False, invert_y=True, squared=True):
         # create pyplot object
