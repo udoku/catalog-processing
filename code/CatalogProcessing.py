@@ -60,11 +60,9 @@ class catalogProcessing:
 
         self.path = path
 
-        if self.parallax == None:
+        self.radius = radius
 
-            self.radius = radius
-
-        else:
+        if self.parallax != None:
 
             self.radius = self.get_radius()
 
@@ -96,9 +94,10 @@ class catalogProcessing:
         # in general, distance (pc) ~ 1 / parallax (arcsec)
         dist = 1000/(self.parallax)
 
-        angular_radius_as = ((self.radius)*2.06265*10**5)/dist # magic number: number of AU in a parsec
+        radius_rad = self.radius / dist
 
-        return(angular_radius_as/3600)
+        return(radius_rad * 57.2958) # magic number: degrees per radian
+
 
     # TODO: implement replacement for gaia_query and ir_query
     def query_catalogs(self):
@@ -139,6 +138,7 @@ class catalogProcessing:
         #try:
 
         out("Creating query...")
+        out(search_string)
         job = Gaia.launch_job_async(search_string, dump_to_file=False)
 
         #except gaierror as e:
@@ -165,7 +165,7 @@ class catalogProcessing:
         return(CatalogTable(catalog,query_results))
 
     # TODO: Needs documentation update/standardization
-    def ir_query(self, ircat_name, view_adql=False):
+    def ir_query(self, ircat_name, view_adql=True):
 
         """
 
