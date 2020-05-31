@@ -4,7 +4,7 @@ from CatalogProcessing import *
 
 import matplotlib.backends.backend_pdf as b_pdf
 
-from . import path, logger, out
+from . import path, dpath, cpath, tpath, logger, out
 
 class Visualization:
 
@@ -755,12 +755,12 @@ class Visualization:
         
         self.plot_tuples(title, tuples, xlabel, ylabel, xlim = xlim, ylim = ylim, invert_x = invert_x, invert_y = invert_y, squared=squared)
 
-    def plot_diagnostics(self):
+    def plot_diagnostics(self, name="full_table"):
         """
         generates hard-coded plots to display useful diagnostic information
         """
 
-        pdf = matplotlib.backends.backend_pdf.PdfPages(path + "/output.pdf")
+        pdf = b_pdf.PdfPages(path + "/diagnostics/" + name + ".pdf")
         
         # define variables
 
@@ -891,7 +891,8 @@ class Visualization:
 
         pdf.close()
 
-    def plot_clusters(self, table, membership, column_A, column_B, xlim= None, ylim=None, invert_x=False, invert_y=True, squared=True):
+    def plot_clusters(self, table, membership, column_A, column_B, xlim= None, ylim=None, invert_x=False, invert_y=True, squared=True, save=None):
+
         # create pyplot object
         fig = plt.figure()
         fig.clf()
@@ -920,14 +921,21 @@ class Visualization:
                     A_i.append(table[column_A][j])
                     B_i.append(table[column_B][j])
             ax.scatter(A_i, B_i)
-            name = "cluster_" + str(i) + "_" + column_A + column_B + ".png"
-            figsp = plt.figure()
-            axsp = figsp.add_subplot(1,1,1)
-            axsp.set_xlabel(str(column_A))
-            axsp.set_ylabel(str(column_B))
-            axsp.scatter(A_i, B_i)
-            figsp.savefig(name)
-            figsp.clf()
+            
+            if save is not None:
+                figsp = plt.figure()
+                axsp = figsp.add_subplot(1,1,1)
+
+                axsp.set_xlabel(str(column_A))
+                axsp.set_ylabel(str(column_B))
+                
+                axsp.scatter(A_i, B_i)
+
+                name = "cluster_" + str(i) + "_" + column_A + column_B + ".png"
+                axsp.set_title(name)
+
+                save.savefig(figsp)
+                figsp.clf()
 
         if xlim:
             ax.set_xlim(xlim)

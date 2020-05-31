@@ -9,7 +9,7 @@ from astroquery.utils.tap.core import TapPlus
 #from astroquery.vizier import Vizier
 #from astroquery.skyview import SkyView
 
-from . import path, logger, out, info_out
+from . import path, dpath, cpath, tpath, logger, out, info_out
 
 from CatalogTable import *
 
@@ -38,7 +38,6 @@ class catalogProcessing:
 
         self.skycoord = SkyCoord(ra, dec)
         self.parallax = parallax
-        self.path = path
         self.radius = radius
 
         if self.parallax != None:
@@ -143,7 +142,7 @@ class catalogProcessing:
         info_out(str(len(query_results['designation'])) + " sources detected.")
 
         # write Gaia query results to file
-        fname = path + "/gaia_query.dat"
+        fname = tpath + "/gaia_query.dat"
         query_results.write(fname, format="ascii")
 
         return(CatalogTable(catalog,query_results))
@@ -208,7 +207,7 @@ class catalogProcessing:
         info_out(str(len(query_results['designation'])) + " sources detected.")
 
         # Write query results to file.
-        fname = self.path + "/" + ircat_name + "_query.dat"
+        fname = tpath + "/" + ircat_name + "_query.dat"
         query_results.write(fname, format="ascii")
 
         return(CatalogTable([ircat_name],query_results))
@@ -669,7 +668,7 @@ class catalogProcessing:
 
         info_out("Full table generated.")
 
-        fname = self.path + "/full_table.dat"
+        fname = tpath + "/full_table.dat"
         full_table.table.write(fname, format="ascii")
 
         return(full_table)
