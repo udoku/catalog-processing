@@ -1,6 +1,7 @@
 from Photometry import *
 from Astrometry import *
 from CatalogProcessing import *
+from CatalogTable import *
 
 import matplotlib.backends.backend_pdf as b_pdf
 
@@ -33,8 +34,6 @@ class Visualization:
         self.ra = ra
 
         self.dec = dec
-
-        self.phot = Photometry(full_table)
 
 
     def format_coords(self, coord_list):
@@ -285,24 +284,20 @@ class Visualization:
 
         if cut != None:
 
-            phot = Photometry(self.full_table)
-
-            column = phot.apply_cut(cut)[0].table[colname]
+            column = apply_cut(self.full_table, cut)[0].table[colname]
 
             #out("column:")
 
             #column.pprint(max_lines=-1)
 
-            astrometry = Astrometry(self.full_table)
-
             try:
 
-                fit = astrometry.fit_gaussian(column, full_column=True)
+                fit = fit_gaussian(self.full_table, column, full_column=True)
 
             #except RuntimeError as rte:
             except:
 
-                hist = astrometry.make_hist(column)
+                hist = make_hist(self.full_table, column)
 
                 x = np.linspace(min(column),max(column),1000)
 
@@ -314,7 +309,7 @@ class Visualization:
 
             else:
 
-                hist = astrometry.make_hist(column)
+                hist = make_hist(self.full_table, column)
 
                 x = np.linspace(min(column),max(column),1000)
 
@@ -324,7 +319,7 @@ class Visualization:
 
                 plt.hist(column, bins=hist[0][1])
 
-                plt.plot(x, astrometry.gaussian(x, fit[0], fit[1], fit[2]))
+                plt.plot(x, gaussian(x, fit[0], fit[1], fit[2]))
 
             finally:
 
@@ -332,17 +327,13 @@ class Visualization:
 
         else:
 
-            astrometry = Astrometry(self.full_table)
-
-
-
-            fit = astrometry.fit_gaussian(colname)
+            fit = fit_gaussian(self.full_table, colname)
 
             #self.full_table.table[colname].pout(max_lines=-1)
 
 
 
-            hist = astrometry.make_hist(self.full_table.table[colname])
+            hist = make_hist(self.full_table, self.full_table.table[colname])
 
 
 
@@ -364,7 +355,7 @@ class Visualization:
 
             plt.hist(self.full_table.table[colname], bins=hist[0][1])
 
-            plt.plot(x, astrometry.gaussian(x, fit[0], fit[1], fit[2]))
+            plt.plot(x, gaussian(x, fit[0], fit[1], fit[2]))
 
             plt.show()
 
@@ -696,17 +687,16 @@ class Visualization:
         # display plot
         plt.show()
 
-    def cut_and_plot(self, cut, col1, col2, phot=None, xlim=None, ylim=None, squared=False, invert_y=False, invert_x=False):
+    def cut_and_plot(self, cut, col1, col2, xlim=None, ylim=None, squared=False, invert_y=False, invert_x=False):
 
         """
         Applies a cut to the full_table and then plots the sources in different colors based on if they meet the cut or not.
 
         col1/2: (colname, label)
 
-        phot: instatiation of Photometry (((I think this is ugly, TODO: Fix)))
         """
 
-        (cut_true, cut_false) = self.phot.apply_cut(cut)
+        (cut_true, cut_false) = apply_cut(self.full_table, cut)
 
         self.plot_tables('stand-in title', (cut_true, cut_false), col1, col2, xlim=xlim, ylim=ylim, squared=squared, invert_y=invert_y, invert_x=invert_x)
         
@@ -766,15 +756,15 @@ class Visualization:
 
         out("Computing photometric variables...")
         M_g = [g + 5 - 5*np.log10(1000/p) for g,p in zip(self.full_table.table["phot_g_mean_mag"], self.full_table.table["parallax"])]
-        g_k = self.phot.subtract_cols("phot_g_mean_mag", "k_m")
-        j_k = self.phot.subtract_cols("j_m", "k_m")
-        w1_w2 = self.phot.subtract_cols("w1mpro", "w2mpro")
-        j_h = self.phot.subtract_cols("j_m", "h_m")
-        h_k = self.phot.subtract_cols("h_m", "k_m")
-        g_h = self.phot.subtract_cols("phot_g_mean_mag", "h_m")
-        k_w1 = self.phot.subtract_cols("k_m", "w1mpro")
-        k_w2 = self.phot.subtract_cols("k_m", "w2mpro")
-        k_w3 = self.phot.subtract_cols("k_m", "w3mpro")
+        g_k = subtract_cols(self.full_table, "phot_g_mean_mag", "k_m")
+        j_k = subtract_cols(self.full_table, "j_m", "k_m")
+        w1_w2 = subtract_cols(self.full_table, "w1mpro", "w2mpro")
+        j_h = subtract_cols(self.full_table, "j_m", "h_m")
+        h_k = subtract_cols(self.full_table, "h_m", "k_m")
+        g_h = subtract_cols(self.full_table, "phot_g_mean_mag", "h_m")
+        k_w1 = subtract_cols(self.full_table, "k_m", "w1mpro")
+        k_w2 = subtract_cols(self.full_table, "k_m", "w2mpro")
+        k_w3 = subtract_cols(self.full_table, "k_m", "w3mpro")
 
         out("Applying photometric cuts...")
 
@@ -869,7 +859,7 @@ class Visualization:
 
         try:
             # Lots of magic numbers here.
-            cut_string = """(-1.81 -2*1.31 < self.phot.full_table["pmra"]) & (self.phot.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.phot.full_table["pmdec"]) & (self.phot.full_table["pmdec"] < -2.67 +2*1.44)"""
+            cut_string = """(-1.81 -2*1.31 < self.full_table["pmra"]) & (self.full_table["pmra"] < -1.81 +2*1.31) & (-2.67 -2*1.44 < self.full_table["pmdec"]) & (self.full_table["pmdec"] < -2.67 +2*1.44)"""
 
             out(cut_string)
             cut_true = self.full_table.table[pd.eval(cut_string)]
@@ -928,7 +918,7 @@ class Visualization:
 
                 axsp.set_xlabel(str(column_A))
                 axsp.set_ylabel(str(column_B))
-                
+
                 axsp.scatter(A_i, B_i)
 
                 name = "cluster_" + str(i) + "_" + column_A + column_B + ".png"

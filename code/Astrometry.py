@@ -34,448 +34,434 @@ from getCI import *
 
 from code import path, logger, out
 
-# TODO: why is this a class?
-class Astrometry:
+
+# TODO: needs documentation updates
+def get_bin_mid(bins):
 
     """
 
-    This class defines methods for astrometrical analysis.
+    Input: list/array of bin delimit values
 
-    Instantiated with a full_table.
+    Output: list consisting of the middle values of these
 
     """
 
-    def __init__(self, full_table):
+    bins_middle_values = []
 
-        self.full_table = full_table
+    for i,j in zip(bins[:-1],bins[1:]):
 
-    # TODO: needs documentation updates
-    def get_bin_mid(self, bins):
+        bins_middle_values.append((i+j)/2)
 
-        """
+    return(bins_middle_values)
 
-        Input: list/array of bin delimit values
+# Defines the gaussian
+# TODO: needs documentation updates
+def gaussian(x, a, b, c):
 
-        Output: list consisting of the middle values of these
-
-        """
-
-        bins_middle_values = []
-
-        for i,j in zip(bins[:-1],bins[1:]):
-
-            bins_middle_values.append((i+j)/2)
-
-        return(bins_middle_values)
-
-    # Defines the gaussian
-    # TODO: needs documentation updates
-    def gaussian(self, x, a, b, c):
-
-        return(a*np.exp(-(x-b)**2/(2*c**2)))
+    return(a*np.exp(-(x-b)**2/(2*c**2)))
 
 
-    def remove_masked(self, ap_column, header):
+def remove_masked(table, ap_column, header):
 
-        """
+    """
 
-        Takes an astroquery result and a column header (str) and returns a list not containing the masked elements.
+    Takes an astroquery result and a column header (str) and returns a list not containing the masked elements.
 
-        """
+    """
 
-        data_list = []
+    data_list = []
 
-        for i in ap_column[header]: # does this actually work?
+    for i in ap_column[header]: # does this actually work?
 
-            if type(i)== np.float64:
+        if type(i)== np.float64:
 
-                data_list.append(i)
+            data_list.append(i)
 
-        return(data_list)
+    return(data_list)
 
-    # TODO: needs documentation update
-    def make_hist(self, data_list):
+# TODO: needs documentation update
+def make_hist(table, data_list):
 
-        """
+    """
 
-        Makes a histogram using np.histogram. Return a 2-tuple consisting of the output of np.histogram and the midpoints of the bins.
+    Makes a histogram using np.histogram. Return a 2-tuple consisting of the output of np.histogram and the midpoints of the bins.
 
-        """
+    """
 
-        data_list = data_list[~data_list.mask]
+    data_list = data_list[~data_list.mask]
 
-        #histogram = np.histogram(data_list.data, bins="auto")
+    #histogram = np.histogram(data_list.data, bins="auto")
 
-        histogram = np.histogram(data_list.data, bins="sqrt")
+    histogram = np.histogram(data_list.data, bins="sqrt")
 
-        midpoints_of_bins = self.get_bin_mid(histogram[1])
+    midpoints_of_bins = get_bin_mid(histogram[1])
 
-        return((histogram, midpoints_of_bins))
+    return((histogram, midpoints_of_bins))
 
-    # TODO: needs documentation updates
-    # TODO: is this used anywhere?
-    def fit_gaussian(self, colname, full_column=False):
+# TODO: needs documentation updates
+# TODO: is this used anywhere?
+def fit_gaussian(table, colname, full_column=False):
 
-        """
+    """
 
-        Fits a gaussian to a list of data points by automatically sorting them into
+    Fits a gaussian to a list of data points by automatically sorting them into
 
-        bins, and fitting a gaussian using scipy's curve_fit.
-
-
-        Input: List of data points
+    bins, and fitting a gaussian using scipy's curve_fit.
 
 
-        Output: 3-tuple (a,b,c) consisting of the coefficients of the
-
-                gaussian: a*e^{-(x-b)^2/(2c^2)}.
+    Input: List of data points
 
 
-        Dependency: plt, numpy, scipy
+    Output: 3-tuple (a,b,c) consisting of the coefficients of the
 
-        """
+            gaussian: a*e^{-(x-b)^2/(2c^2)}.
 
 
-        if full_column:
+    Dependency: plt, numpy, scipy
 
-            histogram = self.make_hist(colname)
+    """
 
-        else:
 
-            histogram = self.make_hist(self.full_table.table[colname])
+    if full_column:
 
-        fit = scipy.optimize.curve_fit(self.gaussian, histogram[1], histogram[0][0])
+        histogram = make_hist(table, colname)
 
-        return((fit[0][0], fit[0][1], fit[0][2]))
+    else:
 
-    # TODO: needs documentation update
-    # TODO: investigate options on HDBSCAN
-    # (e.g. can we run several analyses in parallel?)
-    def identify_clusters(self, table, columns, expected_clusters=None, verbose=False):
+        histogram = make_hist(table, table.table[colname])
 
-        # can include:
-        # min_samples
-        # min_cluster_size
-        # cluster_selection_epsilon
-        # allow_single_cluster
-        # alpha
+    fit = scipy.optimize.curve_fit(gaussian, histogram[1], histogram[0][0])
 
-        #data = []
-        #candidates_table = table[:]
+    return((fit[0][0], fit[0][1], fit[0][2]))
 
-        out("Organizing clustering data...")
+# TODO: needs documentation update
+# TODO: investigate options on HDBSCAN
+# (e.g. can we run several analyses in parallel?)
+def identify_clusters(table, columns, expected_clusters=None, verbose=False):
 
-        if verbose:
-            out("Columns in supplied data table:")
-            out(table.table.colnames)
-            out("Columns to be used for clustering analysis:")
-            out(columns)
+    # can include:
+    # min_samples
+    # min_cluster_size
+    # cluster_selection_epsilon
+    # allow_single_cluster
+    # alpha
 
-        out("Initializing data structures...")
-        data = []
-        candidates_table = table.table[:]
-        count = 0
+    #data = []
+    #candidates_table = table[:]
 
-        out("Selecting data...")
-        for i in range(len(table.table[columns[0]])):
-            datai=[]
-            include_flag = True
+    out("Organizing clustering data...")
+
+    if verbose:
+        out("Columns in supplied data table:")
+        out(table.table.colnames)
+        out("Columns to be used for clustering analysis:")
+        out(columns)
+
+    out("Initializing data structures...")
+    data = []
+    candidates_table = table.table[:]
+    count = 0
+
+    out("Selecting data...")
+    for i in range(len(table.table[columns[0]])):
+        datai=[]
+        include_flag = True
+        for c in columns:
+            if not (table.table[c][i] != None):
+                include_flag = False
+        if include_flag:
             for c in columns:
-                if not (table.table[c][i] != None):
-                    include_flag = False
-            if include_flag:
-                for c in columns:
-                    datai.append(table.table[c][i])
-                data.append(datai)
-            else:
-                candidates_table.remove_row(i-count)
-                count += 1
-
-        if verbose:
-            out("Columns in dataset: ")
-            out(len(data[0]))
-            out("Entries in dataset: ")
-            out(len(data))
-
-        out("Calculating clusters...")
-        #clusterer = hdbscan.HDBSCAN(min_cluster_size=(len(data_A) / 10))
-        #clusterer = hdbscan.HDBSCAN(allow_single_cluster=False, min_cluster_size=(len(data_A)/20))
-        if expected_clusters:
-            out("Iterating minimum cluster size...")
-            
-            iteration=1
-            while(1):
-                out(str(iteration) + "%")
-                min_cluster_size = abs(int(iteration * len(data) / 100))+ 1 # 1% of the data size
-                clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, min_samples=10)
-
-                clusterer.fit(data)
-
-                membership = clusterer.labels_
-
-                if max(membership) < expected_clusters:
-                    break
-
-                iteration += 1
+                datai.append(table.table[c][i])
+            data.append(datai)
         else:
+            candidates_table.remove_row(i-count)
+            count += 1
+
+    if verbose:
+        out("Columns in dataset: ")
+        out(len(data[0]))
+        out("Entries in dataset: ")
+        out(len(data))
+
+    out("Calculating clusters...")
+    #clusterer = hdbscan.HDBSCAN(min_cluster_size=(len(data_A) / 10))
+    #clusterer = hdbscan.HDBSCAN(allow_single_cluster=False, min_cluster_size=(len(data_A)/20))
+    if expected_clusters:
+        out("Iterating minimum cluster size...")
         
-            clusterer = hdbscan.HDBSCAN(min_cluster_size = 50, min_samples=10)
+        iteration=1
+        while(1):
+            out(str(iteration) + "%")
+            min_cluster_size = abs(int(iteration * len(data) / 100))+ 1 # 1% of the data size
+            clusterer = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, min_samples=10)
+
             clusterer.fit(data)
+
             membership = clusterer.labels_
 
-        out("Detected " + str(max(membership) + 1) + " clusters")
-        out("Clustering calculation complete.")#\n Detected " + str(max(membership)) + " clusters in a population of " + str(len(data_A)) " objects.")
-        return CatalogTable(table.catalogs, candidates_table), membership
-
-    # TODO: needs documentation update
-    # TODO: make cluster filters more robust/read in from file?
-    def process_clusters(self, candidates_table, membership, columns):
-        clusters_data = []
-        col_membership = Column(name="cluster_membership", data=membership)
-        candidates_table.add_column(col_membership)
-        memberphot = Photometry(candidates_table)
-
-        for i in range(max(membership)):
-            cut_string = "self.full_table['cluster_membership'] == " + str(i)
-            members, _ = memberphot.apply_cut(cut_string)
-            if abs(np.mean(members.table['pmra'])) - np.std(members.table['pmra']) > 0 and abs(np.mean(members.table['pmdec'])) - np.std(members.table['pmdec']) > 0:
-                #members_trimmed = self.find_cluster_members(members, columns)
-                clusters_data.append(members)
-
-        return clusters_data
-
-    # TODO: needs documentation update
-    # takes a candidate cluster and pares down the members
-    def find_cluster_members(self, cluster, columns):
-        loglikelihoods = []
-        cluster_size = []
-        cluster_members = []
-        means = []
-        stdevs = []
-        for c in columns:
-            means.append(np.mean(cluster[c]))
-            stdevs.append(np.std(cluster[c]))
-        while(len(cluster) > 0):
-            cluster_size.append(len(cluster))
-            cluster_members.append(cluster[:])
-            #out(len(cluster))
-            loglikelihoods_i = []
-            for i in range(len(cluster)):
-                likelihood_i = 0
-                #out(len(columns))
-                for j in range(len(columns)):
-                    #out("column: " + str(columns[j]))
-                    #out("mean: " + str(means[j]))
-                    #out("stdev: " + str(stdevs[j]))
-                    likelihood_i += ((cluster[columns[j]][i] - means[j])/stdevs[j])**2
-                loglikelihoods_i.append(likelihood_i)
-                #out("likelihood: " + str(likelihood_i))
-            loglikelihoods.append(np.mean(loglikelihoods_i))
-            cluster.remove_row(loglikelihoods_i.index(max(loglikelihoods_i)))
-        #out(zip(loglikelihoods[:-1],loglikelihoods[1:]))
-        diffs = [y-x for x, y in zip(loglikelihoods[:-1], loglikelihoods[1:])]
-        #diffs2 = [y-x for x, y in zip(diffs[:-1], diffs[1:])]
-        #diffsmedian = np.median(diffs)
-
-        #index = len(diffs) - 1
-        #while(1):
-        #    if abs(diffs[index]) > 2 * abs(diffsmedian):
-        #        break
-        #    index -= 1
-
-        #fig = plt.figure()
-        #fig.clf()
-
-        # create subfigure to plot lists
-        #ax = fig.add_subplot(1,1,1)
-        #ax.scatter(cluster_size, loglikelihoods)
-        #plt.vlines(cluster_size[index],min(loglikelihoods),max(loglikelihoods))
-        #plt.show()
-
-        index = len(diffs) - 1
-        while(1):
-            if abs(diffs[index]) > abs(np.mean(diffs)):
+            if max(membership) < expected_clusters:
                 break
-            index -= 1
 
-        fig = plt.figure()
-        fig.clf()
+            iteration += 1
+    else:
+    
+        clusterer = hdbscan.HDBSCAN(min_cluster_size = 50, min_samples=10)
+        clusterer.fit(data)
+        membership = clusterer.labels_
 
-        # create subfigure to plot lists
-        ax = fig.add_subplot(1,1,1)
-        ax.scatter(cluster_size, loglikelihoods)
-        plt.vlines(cluster_size[index],min(loglikelihoods),max(loglikelihoods))
-        plt.show()
-        
-        fig = plt.figure()
-        fig.clf()
+    out("Detected " + str(max(membership) + 1) + " clusters")
+    out("Clustering calculation complete.")#\n Detected " + str(max(membership)) + " clusters in a population of " + str(len(data_A)) " objects.")
+    return CatalogTable(table.catalogs, candidates_table), membership
 
-        # create subfigure to plot lists
-        ax = fig.add_subplot(1,1,1)
-        ax.scatter(cluster_size[1:], diffs)
-        #plt.ylim(-0.01,0)
-        plt.show()
+# TODO: needs documentation update
+# TODO: make cluster filters more robust/read in from file?
+def process_clusters(table, candidates_table, membership, columns):
+    clusters_data = []
+    col_membership = Column(name="cluster_membership", data=membership)
+    candidates_table.add_column(col_membership)
+    memberphot = Photometry(candidates_table)
 
-        return cluster_members[index]
+    for i in range(max(membership)):
+        cut_string = "table['cluster_membership'] == " + str(i)
+        members, _ = memberphot.apply_cut(cut_string)
+        if abs(np.mean(members.table['pmra'])) - np.std(members.table['pmra']) > 0 and abs(np.mean(members.table['pmdec'])) - np.std(members.table['pmdec']) > 0:
+            #members_trimmed = find_cluster_members(table, members, columns)
+            clusters_data.append(members)
 
-    # TODO: needs documentation updates
-    # TODO: shift to one function instead, and call with the desired parameter.
-    def cluster_stats(self, cluster):
-        pmra_hist = []
-        #pmra_best = 0
-        pmdec_hist = []
-        #pmdec_best = 0
-        parallax_hist = []
-        #parallax_best = 0
-        ra_hist = []
-        #ra_best = 0
-        dec_hist = []
-        #dec_best = 0
+    return clusters_data
 
-        pmra_vals = np.linspace(min(cluster['pmra']),max(cluster['pmra']),num=5*len(cluster['pmra']))
-        pmdec_vals = np.linspace(min(cluster['pmdec']),max(cluster['pmdec']),num=5*len(cluster['pmdec']))
-        parallax_vals = np.linspace(min(cluster['parallax']),max(cluster['parallax']),num=5*len(cluster['parallax']))
-        ra_vals = np.linspace(min(cluster['gaia_ra']),max(cluster['gaia_ra']),num=5*len(cluster['gaia_ra']))
-        dec_vals = np.linspace(min(cluster['gaia_dec']),max(cluster['gaia_dec']),num=5*len(cluster['gaia_dec']))
+# TODO: needs documentation update
+# takes a candidate cluster and pares down the members
+def find_cluster_members(table, cluster, columns):
+    loglikelihoods = []
+    cluster_size = []
+    cluster_members = []
+    means = []
+    stdevs = []
+    for c in columns:
+        means.append(np.mean(cluster[c]))
+        stdevs.append(np.std(cluster[c]))
+    while(len(cluster) > 0):
+        cluster_size.append(len(cluster))
+        cluster_members.append(cluster[:])
+        #out(len(cluster))
+        loglikelihoods_i = []
+        for i in range(len(cluster)):
+            likelihood_i = 0
+            #out(len(columns))
+            for j in range(len(columns)):
+                #out("column: " + str(columns[j]))
+                #out("mean: " + str(means[j]))
+                #out("stdev: " + str(stdevs[j]))
+                likelihood_i += ((cluster[columns[j]][i] - means[j])/stdevs[j])**2
+            loglikelihoods_i.append(likelihood_i)
+            #out("likelihood: " + str(likelihood_i))
+        loglikelihoods.append(np.mean(loglikelihoods_i))
+        cluster.remove_row(loglikelihoods_i.index(max(loglikelihoods_i)))
+    #out(zip(loglikelihoods[:-1],loglikelihoods[1:]))
+    diffs = [y-x for x, y in zip(loglikelihoods[:-1], loglikelihoods[1:])]
+    #diffs2 = [y-x for x, y in zip(diffs[:-1], diffs[1:])]
+    #diffsmedian = np.median(diffs)
 
-        for pmra in pmra_vals:
-            loglikelihood = 0
-            for index in range(len(cluster['pmra'])):
-                loglikelihood += 0.5 * ((pmra - cluster['pmra'][index])/cluster['pmra_error'][index])**2 - cluster['pmra_error'][index]
-            pmra_hist.append(loglikelihood)
+    #index = len(diffs) - 1
+    #while(1):
+    #    if abs(diffs[index]) > 2 * abs(diffsmedian):
+    #        break
+    #    index -= 1
 
-        pmra_hist /= min(pmra_hist)
-        pmra_actual = []
-        for value in pmra_hist:
-            pmra_actual.append(np.exp(-1.0 * value))
+    #fig = plt.figure()
+    #fig.clf()
 
-        normalize = np.trapz(pmra_actual, pmra_vals)
-        pmra_actual /= normalize
+    # create subfigure to plot lists
+    #ax = fig.add_subplot(1,1,1)
+    #ax.scatter(cluster_size, loglikelihoods)
+    #plt.vlines(cluster_size[index],min(loglikelihoods),max(loglikelihoods))
+    #plt.show()
 
-        most, low, high, _ = getCI(pmra_vals, pmra_actual, 0.68)
+    index = len(diffs) - 1
+    while(1):
+        if abs(diffs[index]) > abs(np.mean(diffs)):
+            break
+        index -= 1
 
-        out("best pmra: " + str(most))
-        out("68 percent interval: " + str(low) + " to " + str(high))
+    fig = plt.figure()
+    fig.clf()
 
-        fig = plt.figure()
-        fig.clf()
-        ax = fig.add_subplot(1,1,1)
-        # apply axis labels
-        ax.set_xlabel('pmra')
-        ax.set_ylabel('posterior probability')
-        ax.plot(pmra_vals, pmra_actual)
-        plt.show()
+    # create subfigure to plot lists
+    ax = fig.add_subplot(1,1,1)
+    ax.scatter(cluster_size, loglikelihoods)
+    plt.vlines(cluster_size[index],min(loglikelihoods),max(loglikelihoods))
+    plt.show()
+    
+    fig = plt.figure()
+    fig.clf()
 
-        for pmdec in pmdec_vals:
-            loglikelihood = 0
-            for index in range(len(cluster['pmdec'])):
-                loglikelihood += 0.5 * ((pmdec - cluster['pmdec'][index])/cluster['pmdec_error'][index])**2
-            pmdec_hist.append(loglikelihood)
-            if loglikelihood < min(pmdec_hist):
-                pmra_best = pmdec
+    # create subfigure to plot lists
+    ax = fig.add_subplot(1,1,1)
+    ax.scatter(cluster_size[1:], diffs)
+    #plt.ylim(-0.01,0)
+    plt.show()
 
-        pmdec_hist /= min(pmdec_hist)
-        pmdec_actual = []
-        for value in pmdec_hist:
-            pmdec_actual.append(np.exp(-1.0 * value))
+    return cluster_members[index]
 
-        normalize = np.trapz(pmdec_actual, pmdec_vals)
-        pmdec_actual /= normalize
+# TODO: needs documentation updates
+# TODO: shift to one function instead, and call with the desired parameter.
+def cluster_stats(table, cluster):
+    pmra_hist = []
+    #pmra_best = 0
+    pmdec_hist = []
+    #pmdec_best = 0
+    parallax_hist = []
+    #parallax_best = 0
+    ra_hist = []
+    #ra_best = 0
+    dec_hist = []
+    #dec_best = 0
 
-        most, low, high, _ = getCI(pmdec_vals, pmdec_actual, 0.68)
+    pmra_vals = np.linspace(min(cluster['pmra']),max(cluster['pmra']),num=5*len(cluster['pmra']))
+    pmdec_vals = np.linspace(min(cluster['pmdec']),max(cluster['pmdec']),num=5*len(cluster['pmdec']))
+    parallax_vals = np.linspace(min(cluster['parallax']),max(cluster['parallax']),num=5*len(cluster['parallax']))
+    ra_vals = np.linspace(min(cluster['gaia_ra']),max(cluster['gaia_ra']),num=5*len(cluster['gaia_ra']))
+    dec_vals = np.linspace(min(cluster['gaia_dec']),max(cluster['gaia_dec']),num=5*len(cluster['gaia_dec']))
 
-        out("best pmdec: " + str(most))
-        out("68 percent interval: " + str(low) + " to " + str(high))
+    for pmra in pmra_vals:
+        loglikelihood = 0
+        for index in range(len(cluster['pmra'])):
+            loglikelihood += 0.5 * ((pmra - cluster['pmra'][index])/cluster['pmra_error'][index])**2 - cluster['pmra_error'][index]
+        pmra_hist.append(loglikelihood)
 
-        fig = plt.figure()
-        fig.clf()
-        ax = fig.add_subplot(1,1,1)
-        # apply axis labels
-        ax.set_xlabel('pmdec')
-        ax.set_ylabel('posterior probability')
-        ax.plot(pmdec_vals, pmdec_actual)
-        plt.show()
+    pmra_hist /= min(pmra_hist)
+    pmra_actual = []
+    for value in pmra_hist:
+        pmra_actual.append(np.exp(-1.0 * value))
 
-        for parallax in parallax_vals:
-            loglikelihood = 0
-            for index in range(len(cluster['parallax'])):
-                loglikelihood += 0.5 * ((parallax - cluster['parallax'][index])/cluster['parallax_error'][index])**2 - cluster['parallax_error'][index]
-            parallax_hist.append(loglikelihood)
+    normalize = np.trapz(pmra_actual, pmra_vals)
+    pmra_actual /= normalize
 
-        parallax_hist /= min(parallax_hist)
-        parallax_actual = []
-        for value in parallax_hist:
-            parallax_actual.append(np.exp(-1.0 * value))
+    most, low, high, _ = getCI(pmra_vals, pmra_actual, 0.68)
 
-        normalize = np.trapz(parallax_actual, parallax_vals)
-        parallax_actual /= normalize
+    out("best pmra: " + str(most))
+    out("68 percent interval: " + str(low) + " to " + str(high))
 
-        most, low, high, _ = getCI(parallax_vals, parallax_actual, 0.68)
+    fig = plt.figure()
+    fig.clf()
+    ax = fig.add_subplot(1,1,1)
+    # apply axis labels
+    ax.set_xlabel('pmra')
+    ax.set_ylabel('posterior probability')
+    ax.plot(pmra_vals, pmra_actual)
+    plt.show()
 
-        out("best parallax: " + str(most))
-        out("68 percent interval: " + str(low) + " to " + str(high))
+    for pmdec in pmdec_vals:
+        loglikelihood = 0
+        for index in range(len(cluster['pmdec'])):
+            loglikelihood += 0.5 * ((pmdec - cluster['pmdec'][index])/cluster['pmdec_error'][index])**2
+        pmdec_hist.append(loglikelihood)
+        if loglikelihood < min(pmdec_hist):
+            pmra_best = pmdec
 
-        fig = plt.figure()
-        fig.clf()
-        ax = fig.add_subplot(1,1,1)
-        # apply axis labels
-        ax.set_xlabel('parallax')
-        ax.set_ylabel('posterior probability')
-        ax.plot(parallax_vals, parallax_actual)
-        plt.show()
+    pmdec_hist /= min(pmdec_hist)
+    pmdec_actual = []
+    for value in pmdec_hist:
+        pmdec_actual.append(np.exp(-1.0 * value))
 
-        for ra in ra_vals:
-            loglikelihood = 0
-            for index in range(len(cluster['gaia_ra'])):
-                loglikelihood += 0.5 * ((ra - cluster['gaia_ra'][index])/cluster['ra_error'][index])**2 - cluster['ra_error'][index]
-            ra_hist.append(loglikelihood)
+    normalize = np.trapz(pmdec_actual, pmdec_vals)
+    pmdec_actual /= normalize
 
-        ra_hist /= min(ra_hist)
-        ra_actual = []
-        for value in ra_hist:
-            ra_actual.append(np.exp(-1.0 * value))
+    most, low, high, _ = getCI(pmdec_vals, pmdec_actual, 0.68)
 
-        normalize = np.trapz(ra_actual, ra_vals)
-        ra_actual /= normalize
+    out("best pmdec: " + str(most))
+    out("68 percent interval: " + str(low) + " to " + str(high))
 
-        most, low, high, _ = getCI(ra_vals, ra_actual, 0.68)
+    fig = plt.figure()
+    fig.clf()
+    ax = fig.add_subplot(1,1,1)
+    # apply axis labels
+    ax.set_xlabel('pmdec')
+    ax.set_ylabel('posterior probability')
+    ax.plot(pmdec_vals, pmdec_actual)
+    plt.show()
 
-        out("best ra: " + str(most))
-        out("68 percent interval: " + str(low) + " to " + str(high))
+    for parallax in parallax_vals:
+        loglikelihood = 0
+        for index in range(len(cluster['parallax'])):
+            loglikelihood += 0.5 * ((parallax - cluster['parallax'][index])/cluster['parallax_error'][index])**2 - cluster['parallax_error'][index]
+        parallax_hist.append(loglikelihood)
 
-        fig = plt.figure()
-        fig.clf()
-        ax = fig.add_subplot(1,1,1)
-        # apply axis labels
-        ax.set_xlabel('ra')
-        ax.set_ylabel('posterior probability')
-        ax.plot(ra_vals, ra_actual)
-        plt.show()
+    parallax_hist /= min(parallax_hist)
+    parallax_actual = []
+    for value in parallax_hist:
+        parallax_actual.append(np.exp(-1.0 * value))
 
-        for dec in dec_vals:
-            loglikelihood = 0
-            for index in range(len(cluster['gaia_dec'])):
-                loglikelihood += 0.5 * ((dec - cluster['gaia_dec'][index])/cluster['dec_error'][index])**2 - cluster['dec_error'][index]
-            dec_hist.append(loglikelihood)
+    normalize = np.trapz(parallax_actual, parallax_vals)
+    parallax_actual /= normalize
 
-        dec_hist /= min(dec_hist)
-        dec_actual = []
-        for value in pmra_hist:
-            dec_actual.append(np.exp(-1.0 * value))
+    most, low, high, _ = getCI(parallax_vals, parallax_actual, 0.68)
 
-        normalize = np.trapz(dec_actual, dec_vals)
-        dec_actual /= normalize
+    out("best parallax: " + str(most))
+    out("68 percent interval: " + str(low) + " to " + str(high))
 
-        most, low, high, _ = getCI(dec_vals, dec_actual, 0.68)
+    fig = plt.figure()
+    fig.clf()
+    ax = fig.add_subplot(1,1,1)
+    # apply axis labels
+    ax.set_xlabel('parallax')
+    ax.set_ylabel('posterior probability')
+    ax.plot(parallax_vals, parallax_actual)
+    plt.show()
 
-        out("best dec: " + str(most))
-        out("68 percent interval: " + str(low) + " to " + str(high))
+    for ra in ra_vals:
+        loglikelihood = 0
+        for index in range(len(cluster['gaia_ra'])):
+            loglikelihood += 0.5 * ((ra - cluster['gaia_ra'][index])/cluster['ra_error'][index])**2 - cluster['ra_error'][index]
+        ra_hist.append(loglikelihood)
 
-        fig = plt.figure()
-        fig.clf()
-        ax = fig.add_subplot(1,1,1)
-        # apply axis labels
-        ax.set_xlabel('dec')
-        ax.set_ylabel('posterior probability')
-        ax.plot(dec_vals, dec_actual)
-        plt.show()
+    ra_hist /= min(ra_hist)
+    ra_actual = []
+    for value in ra_hist:
+        ra_actual.append(np.exp(-1.0 * value))
+
+    normalize = np.trapz(ra_actual, ra_vals)
+    ra_actual /= normalize
+
+    most, low, high, _ = getCI(ra_vals, ra_actual, 0.68)
+
+    out("best ra: " + str(most))
+    out("68 percent interval: " + str(low) + " to " + str(high))
+
+    fig = plt.figure()
+    fig.clf()
+    ax = fig.add_subplot(1,1,1)
+    # apply axis labels
+    ax.set_xlabel('ra')
+    ax.set_ylabel('posterior probability')
+    ax.plot(ra_vals, ra_actual)
+    plt.show()
+
+    for dec in dec_vals:
+        loglikelihood = 0
+        for index in range(len(cluster['gaia_dec'])):
+            loglikelihood += 0.5 * ((dec - cluster['gaia_dec'][index])/cluster['dec_error'][index])**2 - cluster['dec_error'][index]
+        dec_hist.append(loglikelihood)
+
+    dec_hist /= min(dec_hist)
+    dec_actual = []
+    for value in pmra_hist:
+        dec_actual.append(np.exp(-1.0 * value))
+
+    normalize = np.trapz(dec_actual, dec_vals)
+    dec_actual /= normalize
+
+    most, low, high, _ = getCI(dec_vals, dec_actual, 0.68)
+
+    out("best dec: " + str(most))
+    out("68 percent interval: " + str(low) + " to " + str(high))
+
+    fig = plt.figure()
+    fig.clf()
+    ax = fig.add_subplot(1,1,1)
+    # apply axis labels
+    ax.set_xlabel('dec')
+    ax.set_ylabel('posterior probability')
+    ax.plot(dec_vals, dec_actual)
+    plt.show()
