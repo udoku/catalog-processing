@@ -1,10 +1,8 @@
 from Photometry import *
-
 from Astrometry import *
-
 from CatalogProcessing import *
 
-from code import path, logger, out
+from . import path, logger, out
 
 class Visualization:
 
@@ -279,41 +277,7 @@ class Visualization:
 
 
 
-        '''#formatted_coord_list = self.format_coords(coord_list)
-        formatted_coord_list = [self.format_coords(cl) for cl in coord_list]
-
-        #out(type(formatted_coord_list))
-        #out(formatted_coord_list[0])
-
-        ra_min = min(formatted_coord_list[0].ra)
-
-        ra_max = max(formatted_coord_list[0].ra)
-
-        dec_min = min(formatted_coord_list[0].dec)
-
-        dec_max = max(formatted_coord_list[0].dec)
-
-        #out(ra_min)
-        #out(ra_max)
-        #out(ra_max - ra_min)
-
-
-
-        field_side_length = max((ra_max - ra_min, dec_max - dec_min))
-
-        #out(field_side_length)
-
-
-        img_list = self.get_surveys(survey_list, field_side_length)
-
-        out("Number of surveys:")
-        out(len(survey_list))
-        out("Number of images:")
-        out(len(img_list))
-
-        self.plot_surveys(img_list, formatted_coord_list, survey_list)'''
-
-    def plot_hist(self, colname, xlable, cut=None):
+    def plot_hist(self, colname, xlabel, cut=None):
 
         plt.figure()
 
@@ -340,7 +304,7 @@ class Visualization:
 
                 x = np.linspace(min(column),max(column),1000)
 
-                plt.xlabel(xlable,fontsize=14)
+                plt.xlabel(xlabel,fontsize=14)
 
                 plt.ylabel('# count',fontsize=14)
 
@@ -352,7 +316,7 @@ class Visualization:
 
                 x = np.linspace(min(column),max(column),1000)
 
-                plt.xlabel(xlable,fontsize=14)
+                plt.xlabel(xlabel,fontsize=14)
 
                 plt.ylabel('# count',fontsize=14)
 
@@ -390,7 +354,7 @@ class Visualization:
 
             #plt.title('',fontsize=16)
 
-            plt.xlabel(xlable,fontsize=14)
+            plt.xlabel(xlabel,fontsize=14)
 
             plt.ylabel('# count',fontsize=14)
 
@@ -416,6 +380,7 @@ class Visualization:
 
         matplotlib.rcParams['figure.figsize'] = (18,6)
         plt.subplots(nrows=1, ncols=3, sharey=True)
+
         plt.subplot(1,3,1)
         plt.title('cluster')
         plt.gca().minorticks_on()
@@ -423,10 +388,12 @@ class Visualization:
         plt.scatter(gmag[good_data],param_data[good_data])
         plt.xlabel('G [mag]')
         plt.ylabel(parameter + ' ' + str(param_data.unit))
+
         plt.subplot(1,3,2)
         plt.scatter(param_error[good_data],param_data[good_data])
         plt.xlabel(parameter + '_error ' + str(param_data.unit))
         plt.ylabel(parameter + ' ' + str(param_data.unit))
+
         plt.subplot(1,3,3)
         plt.scatter(np.log10(fractional[good_data]),param_data[good_data])
         plt.axvline(np.log10(1), linestyle="solid",color="black")
@@ -435,23 +402,16 @@ class Visualization:
         plt.axvline(np.log10(30), linestyle="dotted",color="blue")
         plt.xlabel('log fractional error [%]')
         plt.ylabel(parameter + ' ' + str(param_data.unit))
+
         plt.show()
 
     def plot_list(self, colname_list):
+        """
 
-        #out(self.full_table.table[colname1], self.full_table.table[colname1])
-
-
+        """
 
         fig = plt.figure(figsize=(20,20))
-
         fig.clf()
-
-
-
-        #fig, axs = plt.subplots((len(colname_list)))
-
-
 
         for i in range(len(colname_list)):
 
@@ -459,13 +419,9 @@ class Visualization:
 
             ax = fig.add_subplot(len(colname_list), 2, ind)
 
-
-
             ax.set_xlabel(colname_list[i][0] + " [{}]".format(self.full_table.table[colname_list[i][0]].unit), fontsize=14)
 
             ax.set_ylabel(colname_list[i][1] + " [{}]".format(self.full_table.table[colname_list[i][1]].unit), fontsize=14)
-
-            #out("hi")
 
             ax.scatter(self.full_table.table[colname_list[i][0]], self.full_table.table[colname_list[i][1]], s=8, marker="o")
 

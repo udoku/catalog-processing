@@ -1,0 +1,16 @@
+2020-05-30-17-54
+ra=20h05m06.4s, dec=+36d29m13.3s, radius=0.0152120349 deg
+Querying Gaia...
+107 sources detected.
+Querying 2MASS...
+33 sources detected.
+Querying AllWISE...
+17 sources detected.
+5 sources in all three catalogs.
+23 sources in Gaia and 2MASS but not AllWISE.
+1 sources in Gaia and AllWISE but not 2MASS.
+3 sources in 2MASS and AllWISE but not Gaia.
+78 sources in Gaia only.
+5 sources in 2mass only.
+8 sources in AllWISE only.
+Full table generated.

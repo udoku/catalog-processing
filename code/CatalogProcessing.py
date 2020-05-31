@@ -1,33 +1,15 @@
-#import astropy
-#from astropy import coordinates
-#from astropy import wcs
+import numpy as np
 import astropy.units as u
 from astropy.coordinates.sky_coordinate import SkyCoord
 from astropy.table import hstack, vstack, Table, Column
 from astropy.io import ascii
-#from astropy.visualization import (MinMaxInterval, ZScaleInterval, PercentileInterval,
-#                                   SqrtStretch, LinearStretch, LogStretch, HistEqStretch,
-#                                   ImageNormalize)
-#from astropy.units import Quantity
-#from astroquery.vizier import Vizier
+
 from astroquery.gaia import Gaia
 from astroquery.utils.tap.core import TapPlus
+#from astroquery.vizier import Vizier
 #from astroquery.skyview import SkyView
 
-import numpy as np
-#import matplotlib.pyplot as plt
-#import matplotlib
-#import scipy.optimize
-#import pandas as pd
-#from tkinter import *
-
-#import hdbscan
-
-#from getCI import *
-
-import os
-from datetime import datetime
-from code import path, logger, out
+from . import path, logger, out, info_out
 
 from CatalogTable import *
 
@@ -35,45 +17,46 @@ class catalogProcessing:
 
     # TODO: improve class documentation
     """
+    Class for querying astronomical databases.
+
+    Contains methods for accessing data from Gaia and infrared surveys,
+    as well as for manipulating the resulting data.
 
     Instantiated with
 
-        > a string representing HAeBe coordinates in degrees.
+    @ra: Right ascension of the target coordinates
+    @dec: Declination of the target coordinates
+    @radius: Radius within which to search
+    @parallax [optional]: Target parallax.
 
-        > radius: number, either physical or angular radius (depending on if parallax is given).
-
-        > parallax (optional): number, in milliarcseconds. If given, radius given is assumed to be physical, and will
-
-          be recalculated into an angular one.
-
+    If @parallax is provided, then @radius is assumed to be in pc, and is
+    converted to degrees. If @parallax is not provided, @radius is assumed
+    to be in degrees.
     """
 
     def __init__(self, ra, dec, radius, parallax=None):
 
-        #self.skycoord = SkyCoord(HAeBe_coord, unit=(u.hourangle, u.deg))
-
-        out("Initializing CatalogProcessing: ra={}, dec={}, radius={}".format(ra, dec, radius))
-
         self.skycoord = SkyCoord(ra, dec)
-
         self.parallax = parallax
-
         self.path = path
-
         self.radius = radius
 
         if self.parallax != None:
 
             self.radius = self.get_radius()
 
-        out("Querying Gaia...")
+        out("Initializing CatalogProcessing:")
+        info_out("ra={}, dec={}, radius={} deg".format(ra, dec, self.radius))
+
+        # Query catalogs and save the data to file
+        info_out("Querying Gaia...")
         self.gaia = self.gaia_query()
         self.gaia.catalogs = ["gaia"]
         out("Done querying Gaia!\n")
-        out("Querying 2MASS...")
+        info_out("Querying 2MASS...")
         self.tmass = self.ir_query("tmass")
         out("Done querying 2MASS!\n")
-        out("Querying AllWISE...")
+        info_out("Querying AllWISE...")
         self.allwise = self.ir_query("allwise")
         out("Done querying AllWISE!\n")
         # other catalogs to be added
@@ -156,10 +139,11 @@ class catalogProcessing:
         out("Retrieving results...")
         query_results = job.get_results()
 
-        out("Results retrieved. " + str(len(query_results['designation'])) + " sources detected.")
+        out("Results retrieved.")
+        info_out(str(len(query_results['designation'])) + " sources detected.")
 
         # write Gaia query results to file
-        fname = self.path + "/gaia_query.dat"
+        fname = path + "/gaia_query.dat"
         query_results.write(fname, format="ascii")
 
         return(CatalogTable(catalog,query_results))
@@ -220,7 +204,8 @@ class catalogProcessing:
         out("Retrieving results...")
         query_results = job.get_results()
 
-        out("Results retrieved. " + str(len(query_results['designation'])) + " sources detected.")
+        out("Results retrieved.")
+        info_out(str(len(query_results['designation'])) + " sources detected.")
 
         # Write query results to file.
         fname = self.path + "/" + ircat_name + "_query.dat"
@@ -628,7 +613,7 @@ class catalogProcessing:
         out("Crossmatching all three catalogs...")
         gaia_X_tmass_X_allwise = self.merge_tables(gaia_X_tmass,  allwise_cat)
         
-        out(str(len(gaia_X_tmass_X_allwise.table['gaia_designation'])) + " sources in all three catalogs.")
+        info_out(str(len(gaia_X_tmass_X_allwise.table['gaia_designation'])) + " sources in all three catalogs.")
 
         full_table = gaia_X_tmass_X_allwise
 
@@ -637,34 +622,34 @@ class catalogProcessing:
         # sources in gaia_X_tmass that are not in gaia_X_tmass_X_allwise
         # i.e. sources in Gaia and Tmass but not Allwise
         diff1 = self.table_difference(gaia_X_tmass, full_table, "gaia_designation", "gaia_designation", ["allwise"], gaia_cat, tmass_cat, allwise_cat)
-        out(str(len(diff1['gaia_designation'])) + " sources in Gaia and 2MASS but not AllWISE.")
+        info_out(str(len(diff1['gaia_designation'])) + " sources in Gaia and 2MASS but not AllWISE.")
         full_table.table = vstack([full_table.table, diff1])
 
         # sources in gaia_X_allwise that are not in gaia_X_tmass_X_allwise
         # i.e. sources in Gaia and Allwise but not Tmass.
         diff2 = self.table_difference(gaia_X_allwise, full_table, "gaia_designation", "gaia_designation", ["2mass"], gaia_cat, tmass_cat, allwise_cat)
-        out(str(len(diff2['gaia_designation'])) + " sources in Gaia and AllWISE but not 2MASS.")
+        info_out(str(len(diff2['gaia_designation'])) + " sources in Gaia and AllWISE but not 2MASS.")
         full_table.table = vstack([full_table.table, diff2])
 
         # objects in tmass_X_allwise that are not in gaia_X_tmass_X_allwise, 
         # i.e. sources in tmass and allwise but not gaia.
         diff3 = self.table_difference(tmass_X_allwise, full_table, "allwise_designation", "allwise_designation", ["gaia"], gaia_cat, tmass_cat, allwise_cat)
-        out(str(len(diff3['allwise_designation'])) + " sources in 2MASS and AllWISE but not Gaia.")
+        info_out(str(len(diff3['allwise_designation'])) + " sources in 2MASS and AllWISE but not Gaia.")
         full_table.table = vstack([full_table.table, diff3])
 
         # objects in gaia but not yet in full_table
         diff4 = self.table_difference(gaia_cat, full_table, "gaia_designation", "gaia_designation", ["2mass", "allwise"], gaia_cat, tmass_cat, allwise_cat)
-        out(str(len(diff4['gaia_designation'])) + " sources in Gaia only.")
+        info_out(str(len(diff4['gaia_designation'])) + " sources in Gaia only.")
         full_table.table = vstack([full_table.table, diff4])
 
         # objects in tmass but not yet in full_table
         diff5 = self.table_difference(tmass_cat, full_table, "2mass_designation", "2mass_designation", ["gaia", "allwise"], gaia_cat, tmass_cat, allwise_cat)
-        out(str(len(diff5['2mass_designation'])) + " sources in 2mass only.")
+        info_out(str(len(diff5['2mass_designation'])) + " sources in 2mass only.")
         full_table.table = vstack([full_table.table, diff5])
 
         # objects in allwise but not yet in full_table
         diff6 = self.table_difference(allwise_cat, full_table, "allwise_designation", "allwise_designation", ["gaia", "2mass"], gaia_cat, tmass_cat, allwise_cat)
-        out(str(len(diff6['allwise_designation'])) + " sources in AllWISE only.")
+        info_out(str(len(diff6['allwise_designation'])) + " sources in AllWISE only.")
         full_table.table  = vstack([full_table.table, diff6])
 
 
@@ -682,30 +667,7 @@ class catalogProcessing:
         d.unit="pc"
         full_table.table.add_column(d)
 
-        # summary statistics for data
-        out("Full table generated.")
-        """out("Summary:")
-        out("\nGaia:")
-        out("Total rows: "+ str(len(full_table.table['gaia_designation'].mask.nonzero()[0])))
-        out("G: " + str(len(full_table.table['phot_g_mean_mag'].mask.nonzero()[0])))
-        out("BP: " + str(len(full_table.table['phot_bp_mean_mag'].mask.nonzero()[0])))
-        out("RP: " + str(len(full_table.table['phot_rp_mean_mag'].mask.nonzero()[0])))
-        out("PLX: " + str(len(full_table.table['parallax'].mask.nonzero()[0])))
-        out("PMRA: " + str(len(full_table.table['pmra'].mask.nonzero()[0])))
-        out("PMDEC: " + str(len(full_table.table['pmdec'].mask.nonzero()[0])))
-
-        out("\n2MASS:")
-        out("Total rows: " +str(len(full_table.table['2mass_designation'].mask.nonzero()[0])))
-        out("J: " + str(len(full_table.table['j_m'].mask.nonzero()[0])))
-        out("H: " + str(len(full_table.table['h_m'].mask.nonzero()[0])))
-        out("K: " + str(len(full_table.table['k_m'].mask.nonzero()[0])))
-
-        out("\nallwise:")
-        out("Total rows: " + str(len(full_table.table['allwise_designation'].mask.nonzero()[0])))
-        out("W1: " + str(len(full_table.table['w1mpro'].mask.nonzero()[0])))
-        out("W2: " + str(len(full_table.table['w2mpro'].mask.nonzero()[0])))
-        out("W3: " + str(len(full_table.table['w3mpro'].mask.nonzero()[0])))
-        out("W4: " + str(len(full_table.table['w4mpro'].mask.nonzero()[0])))"""
+        info_out("Full table generated.")
 
         fname = self.path + "/full_table.dat"
         full_table.table.write(fname, format="ascii")

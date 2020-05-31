@@ -104,7 +104,9 @@ class Astrometry:
 
         data_list = data_list[~data_list.mask]
 
-        histogram = np.histogram(data_list.data, bins="auto")
+        #histogram = np.histogram(data_list.data, bins="auto")
+
+        histogram = np.histogram(data_list.data, bins="sqrt")
 
         midpoints_of_bins = self.get_bin_mid(histogram[1])
 
