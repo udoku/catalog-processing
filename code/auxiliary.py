@@ -2,6 +2,8 @@ from Photometry import *
 from Astrometry import *
 from CatalogProcessing import *
 
+import matplotlib.backends.backend_pdf as b_pdf
+
 from . import path, logger, out
 
 class Visualization:
@@ -427,7 +429,7 @@ class Visualization:
 
         plt.show()
 
-    def plot(self, colname1, colname2, xlim=None, ylim=None, squared=False, invert_y=False, invert_x=False):
+    def plot(self, colname1, colname2, title=None, xlim=None, ylim=None, squared=False, invert_y=False, invert_x=False, save=None):
 
         """
         plots colname1 on the x-axis and colname2 on the y-axis.
@@ -435,7 +437,10 @@ class Visualization:
         colname1/2: tuples on two strings, (colname, label)
         """
 
-        plt.figure()
+        fig = plt.figure()
+
+        if title is not None:
+            plt.title(title)
 
         if type(colname1) is str:
 
@@ -510,6 +515,9 @@ class Visualization:
             plt.gcf().set_size_inches(6,6)
 
         plt.show()
+
+        if save is not None:
+            save.savefig(fig)
 
     def double_plot(self, colname_list, lims=None, squared=False):
 
@@ -752,7 +760,7 @@ class Visualization:
         generates hard-coded plots to display useful diagnostic information
         """
 
-        
+        pdf = matplotlib.backends.backend_pdf.PdfPages(path + "/output.pdf")
         
         # define variables
 
@@ -791,70 +799,70 @@ class Visualization:
             self.cut_and_plot("J-H > 0.7", ("2mass_ra", "2mass RA"), ("2mass_dec", "2mass Dec"), squared=True, invert_x=True)
 
             out("Gaia RA vs Gaia Dec.")
-            self.plot(("gaia_ra", "Gaia RA"), ("gaia_dec", "Gaia Dec"), squared=True, invert_x=True )
+            self.plot(("gaia_ra", "Gaia RA"), ("gaia_dec", "Gaia Dec"), title="Gaia RA vs Gaia Dec.", squared=True, invert_x=True, save=pdf)
 
             out("Gaia PM RA vs Gaia PM Dec.")
-            self.plot(("pmra", "pm RA (Gaia)"), ("pmdec", "pm Dec (Gaia)"), xlim=(-30,30), ylim=(-30,30), squared=True)
+            self.plot(("pmra", "pm RA (Gaia)"), ("pmdec", "pm Dec (Gaia)"), xlim=(-30,30), ylim=(-30,30), squared=True, save=pdf)
 
             out("Gaia PM RA vs Gaia PM Dec (closer detail).")
-            self.plot(("pmra", "pm RA (Gaia)"), ("pmdec", "pm Dec (Gaia)"), xlim=(-10,10), ylim=(-10,10), squared=True)
+            self.plot(("pmra", "pm RA (Gaia)"), ("pmdec", "pm Dec (Gaia)"), xlim=(-10,10), ylim=(-10,10), squared=True, save=pdf)
 
             out("Parallax vs Gaia Dec.")
-            self.plot(("parallax", "Parallax"), ("gaia_dec", "Dec (Gaia)"), xlim=(0,5))
+            self.plot(("parallax", "Parallax"), ("gaia_dec", "Dec (Gaia)"), xlim=(0,5), save=pdf)
 
             out("BP/RP vs G Mean Magnitude.")
-            self.plot("bp_rp", "phot_g_mean_mag")
+            self.plot("bp_rp", "phot_g_mean_mag", save=pdf)
 
             out("BP/RP vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
-            self.plot("bp_rp", (M_g, "$M_G [mag]$"))
+            self.plot("bp_rp", (M_g, "$M_G [mag]$"), save=pdf)
 
             out("G-K Magnitude vs G Mean Magnitude.")
-            self.plot((g_k, "G-K [mag]"), "phot_g_mean_mag")
+            self.plot((g_k, "G-K [mag]"), "phot_g_mean_mag", save=pdf)
 
             out("G-K Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
-            self.plot((g_k, "G-K [mag]"), (M_g, "$M_G [mag]$"))
+            self.plot((g_k, "G-K [mag]"), (M_g, "$M_G [mag]$"), save=pdf)
 
             out("J-K Magnitude vs J-M Magnitude.")
-            self.plot((j_k, "J-K [mag]"), "j_m")
+            self.plot((j_k, "J-K [mag]"), "j_m", save=pdf)
 
             out("W1-W2 Magnitude vs W1 Magnitude.")
-            self.plot((w1_w2, "W1-W2 [mag]"), "w1mpro")
+            self.plot((w1_w2, "W1-W2 [mag]"), "w1mpro", save=pdf)
 
             out("J-H Magnitude vs H-K Magnitude.")
-            self.plot((j_h, "J-H [mag]"), (h_k, "H-K [mag]"))
+            self.plot((j_h, "J-H [mag]"), (h_k, "H-K [mag]"), save=pdf)
 
             out("G-H Magnitude vs H-K Magnitude.")
-            self.plot((g_h, "G-H [mag]"), (h_k, "H-K [mag]"))
+            self.plot((g_h, "G-H [mag]"), (h_k, "H-K [mag]"), save=pdf)
 
             out("K-W2 Magnitude vs G-K Magnitude.")
-            self.plot((k_w2, "K - W2 [mag]"), (g_k, "G - K [mag]")) 
+            self.plot((k_w2, "K - W2 [mag]"), (g_k, "G - K [mag]"), save=pdf) 
 
             out("BP/RP Magnitude vs G Mean Magnitude.")
-            self.plot("bp_rp", "phot_g_mean_mag", invert_y=True)
+            self.plot("bp_rp", "phot_g_mean_mag", invert_y=True, save=pdf)
 
             out("2mass RA vs 2mass Dec. K-W1 > 0.2 shown in black, K-w1 < 0.2 shown in red.")
-            self.cut_and_plot("K-W1 > 0.2", ("2mass_ra", "RA"), ("2mass_dec", "Dec"), squared=True)
+            self.cut_and_plot("K-W1 > 0.2", ("2mass_ra", "RA"), ("2mass_dec", "Dec"), squared=True, save=pdf)
 
             out("PMRA vs PMDec. -3.12 < PMRA < -0.5 AND -4.17 < PMDec < -1.23 shown in black, otherwise shown in red. Units in mas/yr.")
-            self.cut_and_plot(cut_1s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-10,10), ylim=(-10,10), squared=True)
+            self.cut_and_plot(cut_1s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-10,10), ylim=(-10,10), squared=True, save=pdf)
 
             out("PMRA vs PMDec - closer detail. -3.12 < PMRA < -0.5 AND -4.17 < PMDec < -1.23 shown in black, otherwise shown in red. Units in mas/yr.")
-            self.cut_and_plot(cut_1s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-6,1), ylim=(-6,1), squared=True)
+            self.cut_and_plot(cut_1s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-6,1), ylim=(-6,1), squared=True, save=pdf)
 
             out("PMRA vs PMDec. -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21 shown in black, otherwise shown in red. Units in mas/yr.")
-            self.cut_and_plot(cut_2s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-10,10), ylim=(-10,10), squared=True)
+            self.cut_and_plot(cut_2s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-10,10), ylim=(-10,10), squared=True, save=pdf)
 
             out("PMRA vs PMDec - closer detail. -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21 shown in black, otherwise shown in red. Units in mas/yr.")
-            self.cut_and_plot(cut_2s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-6,1), ylim=(-6,1), squared=True)
+            self.cut_and_plot(cut_2s, ("pmra", "pm RA [$mas\ yr^{-1}$]"), ("pmdec", "pm Dec [$mas\ yr^{-1}$]"), xlim=(-6,1), ylim=(-6,1), squared=True, save=pdf)
 
             out("Parallax vs PMRA. 0.81 < Parallax < 1.27 shown in black, otherwise shown in red.")
-            self.cut_and_plot(cut_plx_1s, ("parallax", "Parallax"),("pmra", "pm RA"), xlim=(0,5), squared=True)
+            self.cut_and_plot(cut_plx_1s, ("parallax", "Parallax"),("pmra", "pm RA"), xlim=(0,5), squared=True, save=pdf)
 
             out("PMRA histogram. Data shown satisfy -15 < PMRA < 15 AND -15 < PMDec < 15. Units in mas/yr.")
-            self.plot_hist("pmra", "pm RA", cut=cut_outliers)
+            self.plot_hist("pmra", "pm RA", cut=cut_outliers, save=pdf)
 
             out("PMDec histogram. Data shown satisfy -4.43 < PMRA < 0.81 AND -5.55 < PMDec < 0.21. Units in mas/yr.")
-            self.plot_hist("pmdec", "pm Dec", cut=cut_2s)
+            self.plot_hist("pmdec", "pm Dec", cut=cut_2s, save=pdf)
 
         except:
             out("An error occurred while plotting diagnostics. This usually occurs because no sources passed a photometric cut.")
@@ -874,12 +882,14 @@ class Visualization:
             cut_bprp_false = cut_false["bp_rp"]
 
             out("BP-RP Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax ))")
-            self.plot_removed([(cut_bprp_true, cut_mg_true), (cut_bprp_false, cut_mg_false)], "BP - RP", "$M_G$", invert_y=True)
+            self.plot_removed([(cut_bprp_true, cut_mg_true), (cut_bprp_false, cut_mg_false)], "BP - RP", "$M_G$", invert_y=True, save=pdf)
 
             out("BP-RP Magnitude vs M_g = (G Mean Magnitude + 5 - 5 * log10( 1000 / parallax )). More detail.")
-            self.plot_removed([(cut_bprp_true, cut_mg_true), (cut_bprp_false, cut_mg_false)], "BP - RP", "$M_G$", xlim=(0.1,3.5), ylim=(-1, 15), invert_y=True)
+            self.plot_removed([(cut_bprp_true, cut_mg_true), (cut_bprp_false, cut_mg_false)], "BP - RP", "$M_G$", xlim=(0.1,3.5), ylim=(-1, 15), invert_y=True, save=pdf)
         except:
             out("Encountered an error applying this cut. This usually occurs when no sources pass the photometric cut.")
+
+        pdf.close()
 
     def plot_clusters(self, table, membership, column_A, column_B, xlim= None, ylim=None, invert_x=False, invert_y=True, squared=True):
         # create pyplot object
