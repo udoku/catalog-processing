@@ -9,7 +9,7 @@ var searchData=
   ['catalogs',['catalogs',['../classcode_1_1CatalogTable_1_1CatalogTable.html#a2ff5c34982fffd3e46f06472a703902f',1,'code::CatalogTable::CatalogTable']]],
   ['catalogtable',['CatalogTable',['../classcode_1_1CatalogTable_1_1CatalogTable.html',1,'code.CatalogTable.CatalogTable'],['../namespacecode_1_1CatalogTable.html',1,'code.CatalogTable']]],
   ['catalogtable_2epy',['CatalogTable.py',['../CatalogTable_8py.html',1,'']]],
-  ['cluster_5fstats',['cluster_stats',['../namespacecode_1_1Astrometry.html#ae2284a1ddf92dc743f5141d8605b904c',1,'code::Astrometry']]],
+  ['cluster_5fstats',['cluster_stats',['../namespacecode_1_1Astrometry.html#a4c23f02918c6d7e2086e908a5d088cb0',1,'code::Astrometry']]],
   ['code',['code',['../namespacecode.html',1,'']]],
   ['cpath',['cpath',['../namespacecode.html#a852848780fe2049374b7ef65d96d4384',1,'code']]],
   ['current_5ftime',['current_time',['../namespacecode.html#a660c1a3c544016f9e4ab012f4b887f80',1,'code']]],

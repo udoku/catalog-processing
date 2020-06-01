@@ -34,9 +34,6 @@ from CatalogTable import *
 
 from code import path, logger, out
 
-
-
-# TODO: needs documentation update
 # TODO: maybe read in table of colors?
 def apply_cut(table, cut):
 
@@ -44,6 +41,7 @@ def apply_cut(table, cut):
     Used to remove rows of @table that don't meet @cut.
 
     Arguments:
+        table [CatalogTable]: table to process
         cut [string]: a string representing a cut, for example:
             "J-H > 0.7"
             "J-K > H-K"

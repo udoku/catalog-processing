@@ -34,16 +34,15 @@ from getCI import *
 
 from code import path, logger, out
 
-
-# TODO: needs documentation updates
 def get_bin_mid(bins):
-
     """
+    Given a list of bin delimiters, returns a list of bin midpoints.
 
-    Input: list/array of bin delimit values
+    Arguments:
+        bins [list of floats]: list/array of bin delimit values
 
-    Output: list consisting of the middle values of these
-
+    Return:
+        list consisting of the bin midpoints
     """
 
     bins_middle_values = []
@@ -54,92 +53,121 @@ def get_bin_mid(bins):
 
     return(bins_middle_values)
 
-# Defines the gaussian
-# TODO: needs documentation updates
+
 def gaussian(x, a, b, c):
+    """
+    Defines the Gaussian function.
+
+    Arguments:
+        x [float]: value at which to evaluate the Gaussian
+        a [float]: scaling factor for the function
+        b [float]: mean for the distribution
+        c [float]: standard deviation for the distribution
+
+    Return:
+        a * exp(-(x-b)^2/(2c^2))
+    """
 
     return(a*np.exp(-(x-b)**2/(2*c**2)))
 
 
-def remove_masked(table, ap_column, header):
-
+def remove_masked(table, colname):
     """
+    Takes a CatalogTable and a column name and returns the unmasked elements.
 
-    Takes an astroquery result and a column header (str) and returns a list not containing the masked elements.
+    !!! not yet reviewed for functionality; original function from 2019 !!!
 
+    Arguments:
+        table [CatalogTable]: Table to access
+        header [string]: column name
+
+    Return:
+        List of data values in the specified column that are not masked.
     """
 
     data_list = []
 
-    for i in ap_column[header]: # does this actually work?
+    # this will fail if "header" is not a valid column name
+    try:
+        for i in table[colname]: # does this actually work?
 
-        if type(i)== np.float64:
+            if type(i)== np.float64:
 
-            data_list.append(i)
+                data_list.append(i)
+    except:
+        out("Specified column is not a member of the table:")
+        out(colname)
 
     return(data_list)
 
-# TODO: needs documentation update
-def make_hist(table, data_list):
 
+def make_hist(data_list, bin_method="sqrt"):
     """
+    Makes a histogram of data_list. 
 
-    Makes a histogram using np.histogram. Return a 2-tuple consisting of the output of np.histogram and the midpoints of the bins.
+    Available bin methods include:
+     ‘auto’: Maximum of the ‘sturges’ and ‘fd’ estimators. Good all around.
+     ‘fd’: Robust estimator that uses data variability and data size.
+     ‘doane’: Improved Sturges’, works better with non-normal datasets.
+     ‘rice’: Does not take variability into account, only data size.
+     ‘sqrt’: Square root (of data size) estimator.
 
+    Arguments:
+        data_list [list of floats]: data to make the histogram
+        bin_method [int or str]: method for creating bins. If an int, specifies the number of bins; otherwise uses the string methods above.
+
+    Return:
+        (histogram, bin midpoints)
     """
 
     data_list = data_list[~data_list.mask]
 
-    #histogram = np.histogram(data_list.data, bins="auto")
-
-    histogram = np.histogram(data_list.data, bins="sqrt")
+    histogram = np.histogram(data_list.data, bins=bin_method)
 
     midpoints_of_bins = get_bin_mid(histogram[1])
 
-    return((histogram, midpoints_of_bins))
+    return (histogram, midpoints_of_bins)
 
-# TODO: needs documentation updates
-# TODO: is this used anywhere?
-def fit_gaussian(table, colname, full_column=False):
 
+def fit_gaussian(table, colname):
     """
-
     Fits a gaussian to a list of data points by automatically sorting them into
-
     bins, and fitting a gaussian using scipy's curve_fit.
 
+    Arguments:
+        table [CatalogTable]; table to access for data
+        colname [string]: column of the table to access
 
-    Input: List of data points
-
-
-    Output: 3-tuple (a,b,c) consisting of the coefficients of the
-
-            gaussian: a*e^{-(x-b)^2/(2c^2)}.
-
-
-    Dependency: plt, numpy, scipy
+    Return: 
+        3-tuple (a,b,c) consisting of the coefficients of the
+        gaussian: a*e^{-(x-b)^2/(2c^2)}.
 
     """
 
-
-    if full_column:
-
-        histogram = make_hist(table, colname)
-
-    else:
-
-        histogram = make_hist(table, table.table[colname])
+    histogram = make_hist(table.table[colname])
 
     fit = scipy.optimize.curve_fit(gaussian, histogram[1], histogram[0][0])
 
     return((fit[0][0], fit[0][1], fit[0][2]))
 
-# TODO: needs documentation update
+
 # TODO: investigate options on HDBSCAN
 # (e.g. can we run several analyses in parallel?)
 def identify_clusters(table, columns, expected_clusters=None, verbose=False):
+    """
+    Uses HDBSCAN to identify candidate clusters by specified parameters.
 
-    # can include:
+    Arguments:
+        table [CatalogTable]: table to access
+        columns [list of strings]: list of columns to use for cluster detection
+        expected_clusters [int]: Parameter for HDBSCAN; number of clusters expected. If not provided, no default is passed.
+        verbose [bool]: verbose flag option, set to True for more diagnostics
+
+    Return:
+        CatalogTable of cluster candidates, and list of cluster membership
+
+    """
+    # HDBSCAN arguments can include:
     # min_samples
     # min_cluster_size
     # cluster_selection_epsilon
@@ -213,26 +241,54 @@ def identify_clusters(table, columns, expected_clusters=None, verbose=False):
     out("Clustering calculation complete.")#\n Detected " + str(max(membership)) + " clusters in a population of " + str(len(data_A)) " objects.")
     return CatalogTable(table.catalogs, candidates_table), membership
 
-# TODO: needs documentation update
+
 # TODO: make cluster filters more robust/read in from file?
-def process_clusters(table, candidates_table, membership, columns):
+def process_clusters(candidates_table, membership, columns):
+    """
+    Given candidate clusters, applies filter(s) to remove spurious clusters.
+
+    Currently implemented filters:
+        mean pmra and pmdec both more than 1 std dev away from zero
+
+    Arguments:
+        candidates_table [CatalogTable]: table of cluster candidates
+        membership [list of ints]: list of candidate membership
+        columns [list of strings]: list of columns, currently unused
+
+    Return:
+        CatalogTable of sources that passed the filters, with their cluster membership
+    """
+
     clusters_data = []
     col_membership = Column(name="cluster_membership", data=membership)
-    candidates_table.add_column(col_membership)
-    memberphot = Photometry(candidates_table)
+    candidates_table.table.add_column(col_membership)
 
     for i in range(max(membership)):
-        cut_string = "table['cluster_membership'] == " + str(i)
-        members, _ = memberphot.apply_cut(cut_string)
+
+        cut_string = "table.table['cluster_membership'] == " + str(i)
+        members, _ = apply_cut(candidates_table, cut_string)
+
         if abs(np.mean(members.table['pmra'])) - np.std(members.table['pmra']) > 0 and abs(np.mean(members.table['pmdec'])) - np.std(members.table['pmdec']) > 0:
+
             #members_trimmed = find_cluster_members(table, members, columns)
             clusters_data.append(members)
 
-    return clusters_data
+    return CatalogTable(candidates_table.catalogs, clusters_data)
 
-# TODO: needs documentation update
+# TODO: needs documentation updates
 # takes a candidate cluster and pares down the members
-def find_cluster_members(table, cluster, columns):
+def find_cluster_members(cluster, columns):
+    """
+    Given a candidate cluster, eliminates the sources that decrease the likelihood of the cluster the most.
+
+    Arguments:
+        cluster [CatalogTable]: Candidate cluster
+        columns [list of strings]: 
+
+    Return:
+
+    """
+
     loglikelihoods = []
     cluster_size = []
     cluster_members = []
@@ -304,18 +360,71 @@ def find_cluster_members(table, cluster, columns):
 
     return cluster_members[index]
 
-# TODO: needs documentation updates
+
 # TODO: shift to one function instead, and call with the desired parameter.
-def cluster_stats(table, cluster):
-    pmra_hist = []
+def cluster_stats(cluster, param):
+    """
+    Given a candidate cluster and a parameter, finds summary stats and plots that parameter for the cluster.
+
+    Arguments:
+        cluster [CatalogTable]: candidate cluster
+        param [string]: parameter to analyze
+
+    Return:
+        [none]
+    """
+
+    param_hist = []
+    
+    try:
+        param_error = param + "_error"
+        param_data = cluster.table[param]
+        param_error_data = cluster.table[param_error]
+    except KeyError as e:
+        out("Passed parameter does not exist in cluster table.")
+        out(e.message)
+
+    minval = min(param_data)
+    maxval = max(param_data)
+    param_vals = np.linspace(minval, maxval, ,num=5*len(param_data))
+
+    for param in param_vals:
+        loglikelihood = 0
+        for index in range(len(param_data)):
+            loglikelihood += 0.5 * ((param - param_data[index])/param_error_data[index])**2 - param_error_data[index]
+        param_hist.append(loglikelihood)
+
+    param_hist /= min(param_hist)
+    param_actual = []
+    for value in param_hist:
+        param_actual.append(np.exp(-1.0 * value))
+
+    normalize = np.trapz(param_actual, param_vals)
+    param_actual /= normalize
+
+    most, low, high, _ = getCI(param_vals, param_actual, 0.68)
+
+    out("best " + param + ": " + str(most))
+    out("68 percent interval: " + str(low) + " to " + str(high))
+
+    fig = plt.figure()
+    fig.clf()
+    ax = fig.add_subplot(1,1,1)
+    # apply axis labels
+    ax.set_xlabel(param)
+    ax.set_ylabel('posterior probability')
+    ax.plot(param_vals, param_actual)
+    plt.show()
+    
+    """
     #pmra_best = 0
-    pmdec_hist = []
+    #pmdec_hist = []
     #pmdec_best = 0
-    parallax_hist = []
+    #parallax_hist = []
     #parallax_best = 0
-    ra_hist = []
+    #ra_hist = []
     #ra_best = 0
-    dec_hist = []
+    #dec_hist = []
     #dec_best = 0
 
     pmra_vals = np.linspace(min(cluster['pmra']),max(cluster['pmra']),num=5*len(cluster['pmra']))
@@ -465,3 +574,4 @@ def cluster_stats(table, cluster):
     ax.set_ylabel('posterior probability')
     ax.plot(dec_vals, dec_actual)
     plt.show()
+    """

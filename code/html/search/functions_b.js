@@ -12,5 +12,5 @@ var searchData=
   ['plot_5fsurveys',['plot_surveys',['../classcode_1_1auxiliary_1_1Visualization.html#a75d6095ff2bc730def8ecd43d1a1d796',1,'code.auxiliary.Visualization.plot_surveys()'],['../classcode_1_1Visualization_1_1Visualization.html#ad527d9214ece8ead9401e54ff9849d0b',1,'code.Visualization.Visualization.plot_surveys()']]],
   ['plot_5ftables',['plot_tables',['../classcode_1_1auxiliary_1_1Visualization.html#aa086138d53c32f6cf44380c7c53f6c18',1,'code::auxiliary::Visualization']]],
   ['plot_5ftuples',['plot_tuples',['../classcode_1_1auxiliary_1_1Visualization.html#ab78a720d2e3fbfc0cf3f96abe6e4c34b',1,'code::auxiliary::Visualization']]],
-  ['process_5fclusters',['process_clusters',['../namespacecode_1_1Astrometry.html#a4b9ad0e174bf7bdd261a2c6ce5a537d0',1,'code::Astrometry']]]
+  ['process_5fclusters',['process_clusters',['../namespacecode_1_1Astrometry.html#a25d55a0bf26dd1566add49eac90498ae',1,'code::Astrometry']]]
 ];
