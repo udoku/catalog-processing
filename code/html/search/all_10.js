@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['table',['table',['../classcode_1_1CatalogTable_1_1CatalogTable.html#a194c03b9d1efc093ad306d6252dd8fc9',1,'code::CatalogTable::CatalogTable']]],
-  ['table_5fdifference',['table_difference',['../classcode_1_1CatalogProcessing_1_1catalogProcessing.html#af28e68d025044eba01ff92c9fbc7e334',1,'code::CatalogProcessing::catalogProcessing']]],
-  ['tmass',['tmass',['../classcode_1_1CatalogProcessing_1_1catalogProcessing.html#ae2293053b9e4723f31b027c46baea7e8',1,'code::CatalogProcessing::catalogProcessing']]],
-  ['tpath',['tpath',['../namespacecode.html#a67ae168ba65a24211a87de7cbdb79a3b',1,'code']]]
+  ['variability_5fcut',['variability_cut',['../namespacecode_1_1Photometry.html#a56c872f2119f1627a71b4d4393e4ed43',1,'code::Photometry']]],
+  ['visualization',['Visualization',['../classcode_1_1Visualization_1_1Visualization.html',1,'code.Visualization.Visualization'],['../classcode_1_1auxiliary_1_1Visualization.html',1,'code.auxiliary.Visualization']]],
+  ['visualization_2epy',['Visualization.py',['../Visualization_8py.html',1,'']]]
 ];

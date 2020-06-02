@@ -31,8 +31,11 @@ import hdbscan
 from getCI import *
 
 # TODO: implement additional methods as required to complete CatalogProcessing
-# TODO: roll in Photometry class, or roll this into that.
+# (what other methods would be useful?)
 class CatalogTable:
+    """
+    Incorporates an astropy table and a list of catalogs contained within it.
+    """
 
     def __init__(self, catalogs, table):
 

@@ -37,7 +37,15 @@ class Visualization:
 
 
     def format_coords(self, coord_list):
+        """
+        Converts coord_list to a SkyCood in degrees.
 
+        Arguments:
+            coord_list [list of floats]: coordinates to convert
+
+        Return:
+            Skycoord in degrees corresponding to coord_list
+        """
         #TODO: Make this extract the coordinates from the full_list and use that
 
         return(SkyCoord(coord_list, unit='deg'))
@@ -297,7 +305,7 @@ class Visualization:
             #except RuntimeError as rte:
             except:
 
-                hist = make_hist(self.full_table, column)
+                hist = make_hist(self.full_table.table, column)
 
                 x = np.linspace(min(column),max(column),1000)
 
@@ -309,7 +317,7 @@ class Visualization:
 
             else:
 
-                hist = make_hist(self.full_table, column)
+                hist = make_hist(self.full_table.table, column)
 
                 x = np.linspace(min(column),max(column),1000)
 
@@ -333,7 +341,7 @@ class Visualization:
 
 
 
-            hist = make_hist(self.full_table, self.full_table.table[colname])
+            hist = make_hist(self.full_table.table, self.full_table.table[colname])
 
 
 

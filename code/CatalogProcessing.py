@@ -4,6 +4,8 @@ from astropy.coordinates.sky_coordinate import SkyCoord
 from astropy.table import hstack, vstack, Table, Column
 from astropy.io import ascii
 
+import os
+
 from astroquery.gaia import Gaia
 from astroquery.utils.tap.core import TapPlus
 #from astroquery.vizier import Vizier
@@ -14,8 +16,6 @@ from . import path, dpath, cpath, tpath, logger, out, info_out
 from CatalogTable import *
 
 class catalogProcessing:
-
-    # TODO: improve class documentation
     """
     Class for querying astronomical databases.
 
@@ -34,31 +34,59 @@ class catalogProcessing:
     to be in degrees.
     """
 
-    def __init__(self, ra, dec, radius, parallax=None):
+    def __init__(self, ra, dec, radius, parallax=None, load=None):
+        """
+        Initialize a CatalogProcessing object.
 
-        self.skycoord = SkyCoord(ra, dec)
-        self.parallax = parallax
-        self.radius = radius
+        Performs catalog queries of Gaia, 2Mass, and WISE.
 
-        if self.parallax != None:
+        Arguments:
+            ra: Right Ascension of the target
+            dec: Declination of the target
+            radius: radius of the target (deg if @parallax is not supplied, pc if it is)
+            parallax: Parallax of target, in mas
+        """
 
-            self.radius = self.get_radius()
+        if load is not None:
 
-        out("Initializing CatalogProcessing:")
-        info_out("ra={}, dec={}, radius={} deg".format(ra, dec, self.radius))
+            info_out("Loading data from directory: " + load)
+            try:
+                self.skycoord, self.radius, self.parallax = self.load_target(load)
+                self.gaia, self.tmass, self.allwise = self.load_tables(load)
 
-        # Query catalogs and save the data to file
-        info_out("Querying Gaia...")
-        self.gaia = self.gaia_query()
-        self.gaia.catalogs = ["gaia"]
-        out("Done querying Gaia!\n")
-        info_out("Querying 2MASS...")
-        self.tmass = self.ir_query("tmass")
-        out("Done querying 2MASS!\n")
-        info_out("Querying AllWISE...")
-        self.allwise = self.ir_query("allwise")
-        out("Done querying AllWISE!\n")
-        # other catalogs to be added
+            except:
+                info_out("The specified directory does not exist:")
+                data_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                info_out(data_dir + "/" + load)
+
+        else:
+
+            self.skycoord = SkyCoord(ra, dec)
+            self.radius = radius
+            self.parallax = parallax
+
+            if self.parallax != None:
+
+                self.radius = self.get_radius()
+
+            out("Initializing CatalogProcessing:")
+            info_out("ra={}".format(ra, dec, self.radius, parallax))
+            info_out("dec={}".format(dec))
+            info_out("radius={} deg".format(self.radius))
+            info_out("parallax={} mas".format(parallax))
+
+            # Query catalogs and save the data to file
+            info_out("Querying Gaia...")
+            self.gaia = self.gaia_query()
+            self.gaia.catalogs = ["gaia"]
+            out("Done querying Gaia!\n")
+            info_out("Querying 2MASS...")
+            self.tmass = self.ir_query("tmass")
+            out("Done querying 2MASS!\n")
+            info_out("Querying AllWISE...")
+            self.allwise = self.ir_query("allwise")
+            out("Done querying AllWISE!\n")
+            # other catalogs to be added
 
     def get_radius(self):
 
@@ -80,17 +108,90 @@ class catalogProcessing:
 
         return(radius_rad * 57.2958) # magic number: degrees per radian
 
-
-    # TODO: implement replacement for gaia_query and ir_query
-    def query_catalogs(self):
+    
+    def load_target(self, dir):
         """
-        Performs queries of catalogs across the specified radius.
-        For large queries, splits the query into evenly-sized pieces such that no query is larger than 1 deg
+        Loads ra, dec, radius, parallax data from a previously created directory
 
-        Maybe implementation requires that we query over squares of sky?
+        Arguments:
+            dir [string]: directory in which to look
+
+        Returns:
+            ra, dec, radius, parallax
         """
 
-        pass
+        data_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+
+        try:
+            with open(data_dir + "/" + dir + "/README", 'r') as f:
+                out(dir + ": " + f.readline())
+                ra = f.readline().lstrip('ra=').rstrip('\n')
+                out(ra)
+                dec = f.readline().lstrip('dec=').rstrip('\n')
+                out(dec)
+                radius = float(f.readline().lstrip('radius=').rstrip(' deg\n'))
+                out(radius)
+                parallax = float(f.readline().lstrip('parllax=').rstrip(' mas\n'))
+                out(parallax)
+
+        except:
+            out("Specified directory does not contain the required data:")
+            out(dir)
+            return
+
+        return (SkyCoord(ra, dec, unit=(u.hourangle, u.deg)), radius, parallax)
+
+
+    def load_tables(self, dir):
+        """
+        Loads gaia, tmass, and allwise tables from a previously created directory
+
+        Arguments:
+            dir [string]: directory in which to look
+
+        Returns:
+            (gaia table, tmass table, allwise table)
+            All as CatalogTables
+        """
+        
+        data_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        try:
+            gaia_name = data_dir + "/" + dir + "/tables/gaia_query.dat"
+            out(gaia_name)
+            gaia_table = Table.read(gaia_name, format='ascii')
+            gaia = CatalogTable(['gaia'], gaia_table)
+            out("read Gaia table")
+
+            gaia_fname = tpath + "/gaia_query.dat"
+            gaia_table.write(gaia_fname, format='ascii.ecsv')
+            out("wrote Gaia table")
+
+            tmass_name = data_dir + "/" + dir + "/tables/tmass_query.dat"
+            tmass_table = Table.read(tmass_name, format='ascii')
+            tmass = CatalogTable(['tmass'], tmass_table)
+            out("read Tmass table")
+
+            tmass_fname = tpath + "/tmass_query.dat"
+            tmass_table.write(tmass_fname, format='ascii.ecsv')
+            out("wrote Tmass table")
+
+            allwise_name = data_dir + "/" + dir + "/tables/allwise_query.dat"
+            allwise_table = Table.read(allwise_name, format='ascii')
+            allwise = CatalogTable(['allwise'], allwise_table)
+            out("read Allwise table")
+
+            allwise_fname = tpath + "/allwise_query.dat"
+            allwise_table.write(allwise_fname, format='ascii.ecsv')
+            out("wrote Allwise table")
+        
+        except:
+            out("The specified directory does not contain the required data [2]:")
+            out(dir)
+            return
+
+        return (gaia, tmass, allwise)
+
 
     # TODO: integrate with irquery
     def gaia_query(self):
@@ -103,7 +204,7 @@ class catalogProcessing:
             [none]
 
         Returns:
-            Astropy table with query result.
+            CatalogTable with query result.
         """
 
         catalog = ["gaia"]
@@ -143,7 +244,7 @@ class catalogProcessing:
 
         # write Gaia query results to file
         fname = tpath + "/gaia_query.dat"
-        query_results.write(fname, format="ascii")
+        query_results.write(fname, format='ascii.ecsv')
 
         return(CatalogTable(catalog,query_results))
 
@@ -151,22 +252,12 @@ class catalogProcessing:
     def ir_query(self, ircat_name, view_adql=True):
 
         """
-
         Performs a TAP+ query to irsa.ipac and returns the results.
 
-
-
-        ircat_name: string, name of the catalogue according to the irsa.ipac TAP specs
-
-        center_coords: coordinates in SkyCoord format.
-
-        radius: search radius in degrees
-
-        view_adql: False by default. If True,prints the adql of the query generated.
-
+        Main reason for this function is to have basis for easily incorporating TAP queries in a general query function later.
         -----------------------
 
-        Examples:
+        Example catalogs:
 
         "allwise_p3as_psd": AllWISE Source Catalog
 
@@ -180,10 +271,12 @@ class catalogProcessing:
 
         -----------------------
 
+        Arguments:
+            ircat_name [string]: name of the catalogue in the irsa.ipac TAP spec
+            view_adql [bool]: If True, prints the adql of the query generated.
 
-
-        Main reason for this function is to have basis for easily incorporating TAP queries in a general query function later.
-
+        Returns:
+            CatalogTable with query results.
         """
 
         catalogs = {"allwise": "allwise_p3as_psd", "tmass": "fp_psc", "glimpse": "glimpse_s07" }
@@ -208,7 +301,7 @@ class catalogProcessing:
 
         # Write query results to file.
         fname = tpath + "/" + ircat_name + "_query.dat"
-        query_results.write(fname, format="ascii")
+        query_results.write(fname, format='ascii.ecsv')
 
         return(CatalogTable([ircat_name],query_results))
 
@@ -216,33 +309,42 @@ class catalogProcessing:
     # TODO: needs better error handling
     # TODO: read in survey definitions from file
     def xmatch(self, catalog1, catalog2, rad=-1, show_dynamic_radii=True):
-
         """
-        valid surveynames: "2mass", "allwise", "gaia"
-
-
-        Crossmatch cat1 with cat2 at a maximum xmatch radius of rad.
+        Crossmatches two catalogs.
 
         Uses SkyCoord.match_to_catalog_sky() method which implements a nearest neighbour algorithm.
+
+        valid surveynames: "2mass", "allwise", "gaia"
+
+        Arguments:
+            catalog1 [CatalogTable]: first catalog to crossmatch
+            catalog2 [CatalogTable]: second catalog to crossmatch
+            rad [float]: maximum radius to crossmatch. By default, specifies dynamic radius using the associated error.
+            show_dynamic_radii [bool]: 
+
+        
 
 
         cat1, cat2: full query results (astropy tables resulting from querying catalogs)
         colnames1, colnames2: list of the column names of ra dec and respective errors in cat1, cat2. Either [ra, dec] or [ra, dec, err_ra, err_dec] for
 
 
-        Returns: list of lists [cat1_idx, new_idx, new_d2d] or if show_dynamic_radii=True [cat1_idx, new_idx, new_d2d, xmatch_rad]
+        Returns: 
+            [cat1_idx, new_idx, new_d2d]
+            or if show_dynamic_radii=True:
+            [cat1_idx, new_idx, new_d2d, match radii]
 
             cat1_idx: index of the element in cat2 that is nearest to the corresponding element in cat1
+            (cat1_idx[0] = 69 means that the first element in cat1 is matched towards the 69th element in cat2)
 
-                              (cat1_idx[0] = 69 means that the first element in cat1 is matched towards the 69th element in cat2)
+            new_idx: list of indices into catalog2
 
         """
 
-        surveys_coord_colnames = {"2mass":["2mass_ra", "2mass_dec", "err_maj", "err_min"],
-
-                                  "allwise":["allwise_ra", "allwise_dec", "sigra", "sigdec"],
-
-                                  "gaia":["gaia_ra", "gaia_dec", "ra_error", "dec_error"]}
+        surveys_coord_colnames = {
+            "2mass":["2mass_ra", "2mass_dec", "err_maj", "err_min"],
+            "allwise":["allwise_ra", "allwise_dec", "sigra", "sigdec"],
+            "gaia":["gaia_ra", "gaia_dec", "ra_error", "dec_error"]}
 
 
         colnames1 = surveys_coord_colnames[catalog1.catalogs[0]]
@@ -389,11 +491,10 @@ class catalogProcessing:
 
             return([cat1_idx, new_idx, new_d2d])
 
-    def empty_combined_table(self, table_list):
 
+    def empty_combined_table(self, table_list):
         """
-        Takes a list of astropy tables and returns an empty table with the columns of the old tables (hstacked).
-        Used as an auxiliary to generate_full_table()
+        Generates an empty table with the columns of all tables in table_list hstacked.
 
         Arguments:
             table_list [list of astropy tables]: list of tables to hstack and return list of columns
@@ -409,7 +510,6 @@ class catalogProcessing:
         return(combined_table)
 
     def merge_tables(self, cat_table_1, cat_table_2):
-
         """
         Returns a new astropy table that consists of table1 and table2 merged horizontally (columns of table1 coming first).
 
@@ -451,20 +551,16 @@ class catalogProcessing:
 
     # TODO: needs documentation updates
     # TODO: needs updates to support more/arbitrary catalogs
-    def table_difference(self, table1, table2, id_1, id_2, not_in_table1, gaia_cat, tmass_cat, allwise_cat):
-
+    def table_difference(self, table1, table2, id, not_in_table1, gaia_cat, tmass_cat, allwise_cat):
         """
         Returns an astropy table (with the dimenstions of table2) that consists of the objects in table 1 but not in table 2, where the surveys composing table1 is fully contained in table2.
 
-        table1: astropy table
-
-        table2: astropy table
-
-        not_in_table1: list of names of the surveys (gaia, 2mass, allwise) not in table1 but in table2. The purpose of this parameter is to adjust the
-
-                      mask on the full_table returned.
-
-        id_1, id_2: The name by which to identify similar objects (such as gaia designation)
+        Arguments:
+            table1 [CatalogTable]: first table to merge
+            table2 [CatalogTable]: second table to merge
+            id [string]: column by which to identify matching sources
+            not_in_table1 [list of strings]: list of names of the surveys (gaia, 2mass, allwise) not in table1 but in table2
+            # TODO: eliminate this parameter using the .catalogs data object of the CatalogTables
 
         """
         dtype = table2.table.dtype
@@ -479,7 +575,7 @@ class catalogProcessing:
 
         for row in table1.table:
 
-            if row[id_1] in table2.table[id_2]:
+            if row[id] in table2.table[id]:
 
                 pass
 
@@ -502,62 +598,23 @@ class catalogProcessing:
 
     # TODO: needs documentation updates
     # TODO: needs updates to support more catalogs
-    def generate_full_table(self, gen_small_table = False):
-
+    def generate_full_table(self, gen_small_table = False, load=None):
         """
+        Generates the full table from the gaia, tmass, and allwise queries.
 
-        WORK IN PROGRESS:
+        Xmatch Gaia and tmass
+        Xmatch Gaia with allwise
+        Xmatch tmass with allwise
+        Xmatch (Gaia x tmass) with allwise
 
-        Plan:
+        We then append:
+        sources in all three catalogs
+        sources in two of the catalogs
+        sources in just one catalog
 
-        Gaia X tmass -> res1
-
-        res1 X wise -> res2
-
-        append res2
-
-
-
-        append res1\res2
-
-
-
-        append gaia not xmatched at all
-
-
-
-        tmass X wise -> res3
-
-            Here should be no systems in gaia - only tmass\res1 and wise\res2! Check!
-
-
-
-        append res3
-
-
-
-        append tmass unmatched <<<
-
-
-
-        append wise unmatched
-
-
-
-        """
-
-
-        """
-        Small list:
-
-        Gaia
-            "designation", "ra", "dec", "ra_error", "dec_error", "parallax", "parallax_error", "pmra", "pmra_error", "pmdec", "pmdec_error", "phot_g_mean_mag", "bp_rp", "bp_g", "g_rp", "phot_g_n_obs", "phot_g_mean_flux_over_error", "phot_g_mean_flux_error", "phot_g_mean_flux", "phot_bp_mean_mag", "phot_rp_mean_mag"
-
-        2MASS
-            "designation", "ra", "dec","err_maj", "err_min", "j_m", "h_m", "k_m", "j_cmsig", "h_cmsig", "k_cmsig", "k_snr"
-
-        AllWISE
-            "designation", "ra", "dec", "sigra", "sigdec", "w1mpro", "w2mpro", "w3mpro", "w4mpro", "w1sigmpro", "w2sigmpro", "w3sigmpro", "w4sigmpro", "w4snr"
+        Arguments:
+            gen_small_table [bool]: Whether to only use a subset of available columns. False by default.
+            load [string]: Directory from which to load an already generated full_table. None by default.
         """
 
         out("\nGenerating full table...")
@@ -566,12 +623,15 @@ class catalogProcessing:
 
         if gen_small_table:
 
+            # Gaia columns in small_table
             gaia_cat_table = self.gaia.table["designation", "ra", "dec", "ra_error", "dec_error", "parallax", "parallax_error", "pmra", "pmra_error", "pmdec", "pmdec_error", "phot_g_mean_mag", "bp_rp", "bp_g", "g_rp", "phot_g_n_obs", "phot_g_mean_flux_over_error", "phot_g_mean_flux_error", "phot_g_mean_flux", "phot_bp_mean_mag", "phot_rp_mean_mag"]
             gaia_cat = CatalogTable(["gaia"],gaia_cat_table)
 
+            # 2Mass columns in small_table
             tmass_cat_table = self.tmass.table["designation", "ra", "dec","err_maj", "err_min", "j_m", "h_m", "k_m", "j_cmsig", "h_cmsig", "k_cmsig", "k_snr"]
             tmass_cat = CatalogTable(["2mass"],tmass_cat_table)
 
+            # Allwise columns in small_table
             allwise_cat_table = self.allwise.table["designation", "ra", "dec", "sigra", "sigdec", "w1mpro", "w2mpro", "w3mpro", "w4mpro", "w1sigmpro", "w2sigmpro", "w3sigmpro", "w4sigmpro", "w4snr"]
             allwise_cat = CatalogTable(["allwise"],allwise_cat_table)
 
@@ -620,34 +680,34 @@ class catalogProcessing:
 
         # sources in gaia_X_tmass that are not in gaia_X_tmass_X_allwise
         # i.e. sources in Gaia and Tmass but not Allwise
-        diff1 = self.table_difference(gaia_X_tmass, full_table, "gaia_designation", "gaia_designation", ["allwise"], gaia_cat, tmass_cat, allwise_cat)
+        diff1 = self.table_difference(gaia_X_tmass, full_table, "gaia_designation", ["allwise"], gaia_cat, tmass_cat, allwise_cat)
         info_out(str(len(diff1['gaia_designation'])) + " sources in Gaia and 2MASS but not AllWISE.")
         full_table.table = vstack([full_table.table, diff1])
 
         # sources in gaia_X_allwise that are not in gaia_X_tmass_X_allwise
         # i.e. sources in Gaia and Allwise but not Tmass.
-        diff2 = self.table_difference(gaia_X_allwise, full_table, "gaia_designation", "gaia_designation", ["2mass"], gaia_cat, tmass_cat, allwise_cat)
+        diff2 = self.table_difference(gaia_X_allwise, full_table, "gaia_designation", ["2mass"], gaia_cat, tmass_cat, allwise_cat)
         info_out(str(len(diff2['gaia_designation'])) + " sources in Gaia and AllWISE but not 2MASS.")
         full_table.table = vstack([full_table.table, diff2])
 
         # objects in tmass_X_allwise that are not in gaia_X_tmass_X_allwise, 
         # i.e. sources in tmass and allwise but not gaia.
-        diff3 = self.table_difference(tmass_X_allwise, full_table, "allwise_designation", "allwise_designation", ["gaia"], gaia_cat, tmass_cat, allwise_cat)
+        diff3 = self.table_difference(tmass_X_allwise, full_table, "allwise_designation", ["gaia"], gaia_cat, tmass_cat, allwise_cat)
         info_out(str(len(diff3['allwise_designation'])) + " sources in 2MASS and AllWISE but not Gaia.")
         full_table.table = vstack([full_table.table, diff3])
 
         # objects in gaia but not yet in full_table
-        diff4 = self.table_difference(gaia_cat, full_table, "gaia_designation", "gaia_designation", ["2mass", "allwise"], gaia_cat, tmass_cat, allwise_cat)
+        diff4 = self.table_difference(gaia_cat, full_table, "gaia_designation", ["2mass", "allwise"], gaia_cat, tmass_cat, allwise_cat)
         info_out(str(len(diff4['gaia_designation'])) + " sources in Gaia only.")
         full_table.table = vstack([full_table.table, diff4])
 
         # objects in tmass but not yet in full_table
-        diff5 = self.table_difference(tmass_cat, full_table, "2mass_designation", "2mass_designation", ["gaia", "allwise"], gaia_cat, tmass_cat, allwise_cat)
+        diff5 = self.table_difference(tmass_cat, full_table, "2mass_designation", ["gaia", "allwise"], gaia_cat, tmass_cat, allwise_cat)
         info_out(str(len(diff5['2mass_designation'])) + " sources in 2mass only.")
         full_table.table = vstack([full_table.table, diff5])
 
         # objects in allwise but not yet in full_table
-        diff6 = self.table_difference(allwise_cat, full_table, "allwise_designation", "allwise_designation", ["gaia", "2mass"], gaia_cat, tmass_cat, allwise_cat)
+        diff6 = self.table_difference(allwise_cat, full_table, "allwise_designation", ["gaia", "2mass"], gaia_cat, tmass_cat, allwise_cat)
         info_out(str(len(diff6['allwise_designation'])) + " sources in AllWISE only.")
         full_table.table  = vstack([full_table.table, diff6])
 
@@ -669,15 +729,14 @@ class catalogProcessing:
         info_out("Full table generated.")
 
         fname = tpath + "/full_table.dat"
-        full_table.table.write(fname, format="ascii")
+        full_table.table.write(fname, format='ascii.ecsv')
 
         return(full_table)
 
-    # TODO: needs documentation updates/standardization
     # TODO: needs updates to support extraction of rows with data in particular columns
     def extract_ft_part(self, cat_itr, table):
         """
-        Returns a copy of the table without the parts that doesn't have data from the surveys in cat_itr.
+        Returns a copy of @table without the parts missing data from the surveys in cat_itr.
 
         Arguments:
             cat_itr [list of strings]: list of catalog names to check for
@@ -732,52 +791,26 @@ class catalogProcessing:
 
         return(reduced_table)
 
-    # TODO: Needs documentation update
+
     def get_surveys(self, survey_list, field_side_length):
-
         """
-
-        Center: skycoord coordinate+
-
-        survey_list: list or iterable consisting of strings in the form of SkyView surveynames.
+        Retrieves images of the target from surveys
 
         Full description of all the surveys availible can be found here:
 
         https://skyview.gsfc.nasa.gov/current/cgi/survey.plhttps://skyview.gsfc.nasa.gov/current/cgi/survey.pl
 
-
         Some surveynames are:
-
-        "2MASS-J"
-
-        "2MASS-H"
-
-        "2MASS-K"
-
-        "WISE 3.4"
-
-        "WISE 4.6"
-
-        "WISE 12"
-
-        "WISE 22"
-
+        "2MASS-J", "2MASS-H", "2MASS-K"
+        "WISE 3.4", "WISE 4.6", "WISE 12", "WISE 22"
         "DSS"
+        "SDSSg", "SDSSi", "SDSSr", "SDSSu", "SDSSz"
 
-        "SDSSg"
+        Arguments:
+            survey_list [list of strings]: list of SkyView surveynames.
 
-        "SDSSi"
-
-        "SDSSr"
-
-        "SDSSu"
-
-        "SDSSz"
-
-
-        Returns a list of astropy.fits.HDUList objects. All elements of this
-        list have an attribute "".data" that can be passed to plt.imshow().
-
+        Returns:
+            list of astropy.fits.HDUList objects with attribute "".data" that can be passed to plt.imshow().
         """
 
         out("fetching surveys:")

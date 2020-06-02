@@ -350,13 +350,6 @@ Return:
 </div><div class="memdoc">
 <pre class="fragment">Makes a histogram of data_list. 
 
-Available bin methods include:
- ‘auto’: Maximum of the ‘sturges’ and ‘fd’ estimators. Good all around.
- ‘fd’: Robust estimator that uses data variability and data size.
- ‘doane’: Improved Sturges’, works better with non-normal datasets.
- ‘rice’: Does not take variability into account, only data size.
- ‘sqrt’: Square root (of data size) estimator.
-
 Arguments:
     data_list [list of floats]: data to make the histogram
     bin_method [int or str]: method for creating bins. If an int, specifies the number of bins; otherwise uses the string methods above.

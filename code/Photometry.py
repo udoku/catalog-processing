@@ -36,7 +36,6 @@ from code import path, logger, out
 
 # TODO: maybe read in table of colors?
 def apply_cut(table, cut):
-
     """
     Used to remove rows of @table that don't meet @cut.
 
@@ -96,13 +95,14 @@ def apply_cut(table, cut):
     return((CatalogTable(cats,cut_true), CatalogTable(cats,cut_false)))
 
 # TODO: figure out where this is called
-# TODO: needs documentation update
-def cut_list(table, iterable, cut, collist=None):
-
+def cut_list(iterable, cut, collist=None):
     """
-
-    Returns tuple of two lists the first corresponding to the values where the cut is true and the other to the values where the cut is false.
-
+    Applies photometric @cut to @iterable
+    
+    Arguments:
+        iterable [iterable]: contains data to check against @cut
+        cut [string]: cut string to evaluate elements of @iterable
+        collist [list of strings]: legacy argument, I don't know what this does - Alex 6/1/20
     """
 
     cut_true =[]
@@ -122,6 +122,7 @@ def cut_list(table, iterable, cut, collist=None):
                 cut_false.append(val)
 
 # TODO: remove. Deprecated by addition of variability column in full_table.
+# is it? come back to this
 def variability_cut(table):
 
     """
@@ -147,13 +148,21 @@ def variability_cut(table):
 
     return(cut_table)
 
-# TODO: needs documentation update
+
 # TODO: replace with function that reads in a file with cuts and executes those cuts
 def gaia_color_mag_cut(table):
-
     """
-    Returns a copy of the full_table with systems not satisfying the following photometric cuts:
-    
+    Returns a copy of @table with sources not satisfying the photometric cuts:
+    (m_g < 2.46*col + 2.76) and (0.3 < col < 1.8)
+    (m_g < 2.8*col + 2.16) and (1.8 < col)
+    (m_g > 2.14*col - 0.57) and (0.5 < col < 1.2)
+    (m_g > 1.11*col + 0.66) and (1.2 < col < 3)
+
+    Arguments:
+        table [CatalogTable]: table to check against the cuts
+
+    Retrurn:
+        @table with only sources that don't meet one or more of the cuts
     """
 
     M_g = [g + 5 - np.log10(1000/p) -10 for g,p in zip(table.table["phot_g_mean_mag"], table.table["parallax"])]
@@ -489,26 +498,36 @@ def keep_likely_disks(table, join_method="and"):
 # TODO: replace with function that reads in cut from a file and performs that cut
 def remove_star_forming_galaxies(table):
     """
-    Returns a copy of full_table without star forming galaxies that may mimic young stars. Criteria used:
+    Excludes star forming galaxies that may mimic young stars from @table.
+    
+    Criteria used:
     IF W1 > 14, keep only if
         W2-W3 < 2.3 AND W1-W2 > 1  AND W1-W2 > 0.46*(W2-W3) - 0.78 AND W1 < 1.8*(W1-W3) + 4.1 
 
-    Outputs:
-        cut_true, cut_false [tuple of astropy tables]: tables which satisfy and fail to satisfy the specified criteria, respectively.
+    Arguments:
+        table [CatalogTable]: table to check against the cut
+
+    Return:
+        cut_true, cut_false: tables which satisfy and fail to satisfy the cut.
     """
 
     cut = "(W1 > 14 and W2-W3 < 2.3 AND W1-W2 > 1  AND W1-W2 > 0.46*(W2-W3) - 0.78 AND W1 < 1.8*(W1-W3) + 4.1) or W1 < 14"
 
     return apply_cut(table, cut)
 
-# TODO: needs documentation update
+
 # TODO: currently unused? is there a reason to keep this?
 def subtract_cols(table, colname1, colname2):
-
     """
+    Returns the difference between the values of column colname1 and colname2.
 
-    Returns a list consisting of the difference between the values of column colname1 and colname2.
+    Arguments:
+        table [CatalogTable]: table to subtract columns
+        colname1 [string]: column to subtract @colname2 from
+        colname2 [string]: column to subtract from @colname1
 
+    Return:
+        list of the differences between values in colname1 and colname2
     """
 
     return([i-j for i,j in zip(table.table[colname1], table.table[colname2])])

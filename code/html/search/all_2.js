@@ -14,7 +14,7 @@ var searchData=
   ['cpath',['cpath',['../namespacecode.html#a852848780fe2049374b7ef65d96d4384',1,'code']]],
   ['current_5ftime',['current_time',['../namespacecode.html#a660c1a3c544016f9e4ab012f4b887f80',1,'code']]],
   ['cut_5fand_5fplot',['cut_and_plot',['../classcode_1_1auxiliary_1_1Visualization.html#a6571b6813833f3f12f49c70e7267b72c',1,'code.auxiliary.Visualization.cut_and_plot()'],['../classcode_1_1Visualization_1_1Visualization.html#a6ffceedb3a272ed0084fbadd36485d16',1,'code.Visualization.Visualization.cut_and_plot()']]],
-  ['cut_5flist',['cut_list',['../namespacecode_1_1Photometry.html#a5a4ebc0d77dee602de39bf50bf63df93',1,'code::Photometry']]],
+  ['cut_5flist',['cut_list',['../namespacecode_1_1Photometry.html#a53a0c8b8502ce6e1e18c9540ea2cd164',1,'code::Photometry']]],
   ['getci',['getCI',['../namespacecode_1_1getCI.html',1,'code']]],
   ['photometry',['Photometry',['../namespacecode_1_1Photometry.html',1,'code']]],
   ['visualization',['Visualization',['../namespacecode_1_1Visualization.html',1,'code']]]

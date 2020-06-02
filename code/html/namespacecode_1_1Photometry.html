@@ -74,8 +74,8 @@ $(function() {
 Functions</h2></td></tr>
 <tr class="memitem:ac3f90a1c7e093e0267151cf2a73d69ed"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacecode_1_1Photometry.html#ac3f90a1c7e093e0267151cf2a73d69ed">apply_cut</a> (table, cut)</td></tr>
 <tr class="separator:ac3f90a1c7e093e0267151cf2a73d69ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a4ebc0d77dee602de39bf50bf63df93"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacecode_1_1Photometry.html#a5a4ebc0d77dee602de39bf50bf63df93">cut_list</a> (table, iterable, cut, collist=None)</td></tr>
-<tr class="separator:a5a4ebc0d77dee602de39bf50bf63df93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53a0c8b8502ce6e1e18c9540ea2cd164"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacecode_1_1Photometry.html#a53a0c8b8502ce6e1e18c9540ea2cd164">cut_list</a> (iterable, cut, collist=None)</td></tr>
+<tr class="separator:a53a0c8b8502ce6e1e18c9540ea2cd164"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a56c872f2119f1627a71b4d4393e4ed43"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacecode_1_1Photometry.html#a56c872f2119f1627a71b4d4393e4ed43">variability_cut</a> (table)</td></tr>
 <tr class="separator:a56c872f2119f1627a71b4d4393e4ed43"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f2b2f0cc6f47f8fd462056576cfd926"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacecode_1_1Photometry.html#a7f2b2f0cc6f47f8fd462056576cfd926">gaia_color_mag_cut</a> (table)</td></tr>
@@ -142,8 +142,8 @@ G-K vs K-W2
 BP-RP vs J-K</pre> 
 </div>
 </div>
-<a id="a5a4ebc0d77dee602de39bf50bf63df93"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5a4ebc0d77dee602de39bf50bf63df93">&#9670;&nbsp;</a></span>cut_list()</h2>
+<a id="a53a0c8b8502ce6e1e18c9540ea2cd164"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53a0c8b8502ce6e1e18c9540ea2cd164">&#9670;&nbsp;</a></span>cut_list()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -151,12 +151,6 @@ BP-RP vs J-K</pre>
         <tr>
           <td class="memname">def code.Photometry.cut_list </td>
           <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>table</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>iterable</em>, </td>
         </tr>
@@ -179,7 +173,13 @@ BP-RP vs J-K</pre>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Returns tuple of two lists the first corresponding to the values where the cut is true and the other to the values where the cut is false.</pre> 
+<pre class="fragment">Applies photometric @cut to @iterable
+
+Arguments:
+    iterable [iterable]: contains data to check against @cut
+    cut [string]: cut string to evaluate elements of @iterable
+    collist [list of strings]: legacy argument, I don't know what this does - Alex 6/1/20
+</pre> 
 </div>
 </div>
 <a id="a7f2b2f0cc6f47f8fd462056576cfd926"></a>
@@ -197,7 +197,18 @@ BP-RP vs J-K</pre>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Returns a copy of the full_table with systems not satisfying the following photometric cuts:</pre> 
+<pre class="fragment">Returns a copy of @table with sources not satisfying the photometric cuts:
+(m_g &lt; 2.46*col + 2.76) and (0.3 &lt; col &lt; 1.8)
+(m_g &lt; 2.8*col + 2.16) and (1.8 &lt; col)
+(m_g &gt; 2.14*col - 0.57) and (0.5 &lt; col &lt; 1.2)
+(m_g &gt; 1.11*col + 0.66) and (1.2 &lt; col &lt; 3)
+
+Arguments:
+    table [CatalogTable]: table to check against the cuts
+
+Retrurn:
+    @table with only sources that don't meet one or more of the cuts
+</pre> 
 </div>
 </div>
 <a id="a42ddff3977c573d894da1ff963facf89"></a>
@@ -301,12 +312,17 @@ Returns:
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Returns a copy of full_table without star forming galaxies that may mimic young stars. Criteria used:
+<pre class="fragment">Excludes star forming galaxies that may mimic young stars from @table.
+
+Criteria used:
 IF W1 &gt; 14, keep only if
     W2-W3 &lt; 2.3 AND W1-W2 &gt; 1  AND W1-W2 &gt; 0.46*(W2-W3) - 0.78 AND W1 &lt; 1.8*(W1-W3) + 4.1 
 
-Outputs:
-    cut_true, cut_false [tuple of astropy tables]: tables which satisfy and fail to satisfy the specified criteria, respectively.
+Arguments:
+    table [CatalogTable]: table to check against the cut
+
+Return:
+    cut_true, cut_false: tables which satisfy and fail to satisfy the cut.
 </pre> 
 </div>
 </div>
@@ -341,7 +357,16 @@ Outputs:
         </tr>
       </table>
 </div><div class="memdoc">
-<pre class="fragment">Returns a list consisting of the difference between the values of column colname1 and colname2.</pre> 
+<pre class="fragment">Returns the difference between the values of column colname1 and colname2.
+
+Arguments:
+    table [CatalogTable]: table to subtract columns
+    colname1 [string]: column to subtract @colname2 from
+    colname2 [string]: column to subtract from @colname1
+
+Return:
+    list of the differences between values in colname1 and colname2
+</pre> 
 </div>
 </div>
 <a id="a56c872f2119f1627a71b4d4393e4ed43"></a>
