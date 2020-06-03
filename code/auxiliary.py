@@ -305,7 +305,8 @@ class Visualization:
             #except RuntimeError as rte:
             except:
 
-                hist = make_hist(self.full_table.table, column)
+                #hist = make_hist(self.full_table.table[column])
+                hist = make_hist(column)
 
                 x = np.linspace(min(column),max(column),1000)
 
@@ -317,7 +318,8 @@ class Visualization:
 
             else:
 
-                hist = make_hist(self.full_table.table, column)
+                #hist = make_hist(self.full_table.table[column])
+                hist = make_hist(column)
 
                 x = np.linspace(min(column),max(column),1000)
 
@@ -341,7 +343,7 @@ class Visualization:
 
 
 
-            hist = make_hist(self.full_table.table, self.full_table.table[colname])
+            hist = make_hist(self.full_table.table[colname])
 
 
 

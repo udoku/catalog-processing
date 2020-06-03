@@ -80,12 +80,14 @@ class catalogProcessing:
             self.gaia = self.gaia_query()
             self.gaia.catalogs = ["gaia"]
             out("Done querying Gaia!\n")
-            info_out("Querying 2MASS...")
-            self.tmass = self.ir_query("tmass")
-            out("Done querying 2MASS!\n")
+
             info_out("Querying AllWISE...")
             self.allwise = self.ir_query("allwise")
             out("Done querying AllWISE!\n")
+
+            info_out("Querying 2MASS...")
+            self.tmass = self.ir_query("tmass")
+            out("Done querying 2MASS!\n")
             # other catalogs to be added
 
     def get_radius(self):
@@ -297,7 +299,10 @@ class catalogProcessing:
         query_results = job.get_results()
 
         out("Results retrieved.")
-        info_out(str(len(query_results['designation'])) + " sources detected.")
+
+        print(query_results.colnames)
+
+        #info_out(str(len(query_results['designation'])) + " sources detected.")
 
         # Write query results to file.
         fname = tpath + "/" + ircat_name + "_query.dat"
