@@ -1,0 +1,134 @@
+# %ECSV 0.9
+# ---
+# datatype:
+# - name: designation
+#   datatype: object
+#   description: unique WISE source designation
+# - name: ra
+#   unit: deg
+#   datatype: float64
+#   format: '{:11.7f}'
+#   description: right ascension (J2000)
+#   meta: !!omap
+#   - ucd: pos.eq.ra;meta.main
+#   - width: 11
+#   - precision: '7'
+# - name: dec
+#   unit: deg
+#   datatype: float64
+#   format: '{:11.7f}'
+#   description: declination (J2000)
+#   meta: !!omap
+#   - ucd: pos.eq.dec;meta.main
+#   - width: 11
+#   - precision: '7'
+# - name: sigra
+#   unit: arcs
+#   datatype: float64
+#   format: '{:8.4f}'
+#   description: uncertainty in RA
+#   meta: !!omap
+#   - width: 8
+#   - precision: '4'
+# - name: sigdec
+#   unit: arcs
+#   datatype: float64
+#   format: '{:8.4f}'
+#   description: uncertainty in DEC
+#   meta: !!omap
+#   - width: 8
+#   - precision: '4'
+# - name: w1mpro
+#   unit: mag
+#   datatype: float64
+#   format: '{:7.3f}'
+#   description: instrumental profile-fit photometry magnitude, band 1
+#   meta: !!omap
+#   - width: 7
+#   - precision: '3'
+# - name: w2mpro
+#   unit: mag
+#   datatype: float64
+#   format: '{:7.3f}'
+#   description: instrumental profile-fit photometry magnitude, band 2
+#   meta: !!omap
+#   - width: 7
+#   - precision: '3'
+# - name: w3mpro
+#   unit: mag
+#   datatype: float64
+#   format: '{:7.3f}'
+#   description: instrumental profile-fit photometry magnitude, band 3
+#   meta: !!omap
+#   - width: 7
+#   - precision: '3'
+# - name: w4mpro
+#   unit: mag
+#   datatype: float64
+#   format: '{:7.3f}'
+#   description: instrumental profile-fit photometry magnitude, band 4
+#   meta: !!omap
+#   - width: 7
+#   - precision: '3'
+# - name: w1sigmpro
+#   unit: mag
+#   datatype: float64
+#   format: '{:5.3f}'
+#   description: instrumental profile-fit photometry flux uncertainty in mag units,
+#     band 1
+#   meta: !!omap
+#   - width: 5
+#   - precision: '3'
+# - name: w2sigmpro
+#   unit: mag
+#   datatype: float64
+#   format: '{:5.3f}'
+#   description: instrumental profile-fit photometry flux uncertainty in mag units,
+#     band 2
+#   meta: !!omap
+#   - width: 5
+#   - precision: '3'
+# - name: w3sigmpro
+#   unit: mag
+#   datatype: float64
+#   format: '{:5.3f}'
+#   description: instrumental profile-fit photometry flux uncertainty in mag units,
+#     band 3
+#   meta: !!omap
+#   - width: 5
+#   - precision: '3'
+# - name: w4sigmpro
+#   unit: mag
+#   datatype: float64
+#   format: '{:5.3f}'
+#   description: instrumental profile-fit photometry flux uncertainty in mag units,
+#     band 4
+#   meta: !!omap
+#   - width: 5
+#   - precision: '3'
+# - name: w4snr
+#   datatype: float64
+#   format: '{:8.1f}'
+#   description: instrumental profile-fit photometry S/N ratio, band 4
+#   meta: !!omap
+#   - width: 8
+#   - precision: '1'
+# schema: astropy-2.0
+designation ra dec sigra sigdec w1mpro w2mpro w3mpro w4mpro w1sigmpro w2sigmpro w3sigmpro w4sigmpro w4snr
+J200503.56+362944.4 301.2648651 36.4956730 0.0434 0.0415 11.544 11.606 11.040 8.657 0.025 0.023 0.356 "" 1.8
+J200506.24+362843.4 301.2760122 36.4787280 0.0734 0.0749 13.743 13.874 11.776 9.171 0.035 0.043 "" "" 0.6
+J200506.79+362850.2 301.2783125 36.4806151 0.0652 0.0634 13.494 13.627 12.689 8.929 0.032 0.035 "" "" 0.6
+J200505.83+363002.7 301.2743031 36.5007598 0.0623 0.0616 13.226 13.295 11.941 8.865 0.032 0.033 "" "" 1.7
+J200506.99+362928.2 301.2791463 36.4911942 0.0693 0.0695 13.531 13.690 12.517 9.318 0.033 0.040 "" "" -0.1
+J200505.50+362949.7 301.2729404 36.4971657 0.0888 0.0893 13.800 13.931 12.290 9.493 0.043 0.045 "" "" -0.6
+J200502.76+362934.1 301.2615291 36.4928297 0.0636 0.0630 13.085 13.163 11.138 8.682 0.032 0.034 "" "" 1.7
+J200507.23+362839.1 301.2801561 36.4775331 0.0555 0.0549 14.029 14.300 12.652 9.445 0.026 0.038 "" "" -3.1
+J200505.16+362938.9 301.2715023 36.4941467 0.1020 0.1057 14.131 14.396 11.566 8.751 0.049 0.049 "" "" 1.7
+J200503.76+362834.5 301.2656908 36.4762624 0.0916 0.0930 13.918 14.039 11.027 8.883 0.042 0.052 0.142 "" 1.4
+J200508.25+362828.9 301.2843988 36.4746998 0.0417 0.0394 11.515 11.634 11.659 9.306 0.024 0.022 0.232 "" -1.4
+J200505.98+362913.0 301.2749176 36.4869483 0.0408 0.0399 11.791 10.931 8.900 6.528 0.026 0.022 0.039 0.058 18.7
+J200502.63+362901.9 301.2609836 36.4838733 0.1002 0.1035 13.936 14.087 11.482 9.321 0.049 0.048 0.413 0.493 2.2
+J200504.26+362854.1 301.2677830 36.4817110 0.0432 0.0420 11.246 11.282 10.500 8.750 0.025 0.024 0.138 0.288 3.8
+J200504.38+362955.1 301.2682564 36.4986636 0.1058 0.1089 14.205 14.283 11.329 9.370 0.054 0.047 0.440 0.529 2.1
+J200510.36+362918.2 301.2931739 36.4884044 0.0920 0.0922 14.290 14.863 12.517 8.578 0.040 0.064 "" "" 1.9
+J200507.69+362851.9 301.2820599 36.4811079 0.0488 0.0480 13.516 13.688 12.665 9.335 0.025 0.030 "" "" -2.2

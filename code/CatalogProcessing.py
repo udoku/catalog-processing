@@ -12,6 +12,7 @@ from astroquery.utils.tap.core import TapPlus
 #from astroquery.skyview import SkyView
 
 from . import path, dpath, cpath, tpath, logger, out, info_out
+from . import gaia_cols, gaia_cols_list, tmass_cols, tmass_cols_list, allwise_cols, allwise_cols_list
 
 from CatalogTable import *
 
@@ -218,7 +219,7 @@ class catalogProcessing:
 
         #TODO: include code to write diagnostic info to log file incl. ra, dec, radius, search string
 
-        search_string = "SELECT * FROM gaiadr2.gaia_source WHERE CONTAINS(POINT('ICRS',gaiadr2.gaia_source.ra,gaiadr2.gaia_source.dec),CIRCLE('ICRS',{0},{1},{2}))=1;".format(ra, dec, self.radius)
+        search_string = "SELECT {} FROM gaiadr2.gaia_source WHERE CONTAINS(POINT('ICRS',gaiadr2.gaia_source.ra,gaiadr2.gaia_source.dec),CIRCLE('ICRS',{},{},{}))=1;".format(gaia_cols, ra, dec, self.radius)
 
         #try:
 
@@ -243,6 +244,8 @@ class catalogProcessing:
 
         out("Results retrieved.")
         info_out(str(len(query_results['designation'])) + " sources detected.")
+
+        print(query_results.colnames)
 
         # write Gaia query results to file
         fname = tpath + "/gaia_query.dat"
@@ -285,7 +288,15 @@ class catalogProcessing:
 
         catalog = catalogs[ircat_name]
 
-        search_string = "SELECT * FROM {} WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',{},{},{}))=1 ".format(catalog, str(self.skycoord.ra.degree), str(self.skycoord.dec.degree), self.radius)
+        if ircat_name == "tmass":
+            cols = tmass_cols
+            cols_list = tmass_cols_list
+
+        if ircat_name == "allwise":
+            cols = allwise_cols
+            cols_list = allwise_cols_list
+
+        search_string = "SELECT {} FROM {} WHERE CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',{},{},{}))=1 ".format(cols, catalog, str(self.skycoord.ra.degree), str(self.skycoord.dec.degree), self.radius)
 
         if view_adql:
             out(search_string)
@@ -297,6 +308,9 @@ class catalogProcessing:
 
         out("Retrieving results...")
         query_results = job.get_results()
+
+        for old,new in zip(query_results.colnames,cols_list):
+            query_results.rename_column(old,new)
 
         out("Results retrieved.")
 
